@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# mt5-gateway / tron pre-commit (copied from maff0000/forge):
+# block any commit containing a detected secret. Fails LOUDLY if the
+# scanner is missing — public repo, no unscanned commits.
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "[pre-commit] BLOCKED: gitleaks is not installed on this host." >&2
+  exit 1
+fi
+
+if ! gitleaks protect --staged --redact --verbose; then
+  echo "[pre-commit] BLOCKED: gitleaks found a likely secret in staged changes." >&2
+  echo "[pre-commit] Fix it, or add a scoped rule to .gitleaks.toml — never --no-verify." >&2
+  exit 1
+fi
+
+exit 0

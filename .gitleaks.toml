@@ -1,0 +1,39 @@
+title = "mt5-gateway / tron secret rules"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "mt5-password-assignment"
+description = "MT5 / broker password assigned a literal value"
+regex = '''(?i)\b(?:mt5_?password|mt5_?pass|broker_?password|vnc_?password)\s*[:=]\s*['"]?([^\s'"<>#]{4,})'''
+secretGroup = 1
+keywords = ["password", "pass"]
+
+[[rules]]
+id = "mt5-login-number"
+description = "MT5 account login number assigned a literal value"
+regex = '''(?i)\b(?:mt5_?login|account_?login|broker_?login)\s*[:=]\s*['"]?(\d{5,12})\b'''
+secretGroup = 1
+keywords = ["login"]
+
+[[rules]]
+id = "mt5-terminal-ini-password"
+description = "Password line in a rendered MT5 terminal .ini"
+regex = '''(?im)^\s*Password\s*=\s*([^\s<]{4,})\s*$'''
+secretGroup = 1
+keywords = ["password"]
+
+[[rules]]
+id = "bridge-token"
+description = "Bridge / RPyC auth token assigned a literal value"
+regex = '''(?i)\b(?:bridge_?token|rpyc_?token)\s*[:=]\s*['"]?([A-Za-z0-9_\-]{12,})'''
+secretGroup = 1
+keywords = ["token"]
+
+[allowlist]
+description = "Placeholders in example files"
+regexes = [
+  '''^<[^>]*>$''',
+  '''(?i)^(changeme|placeholder|example|redacted)$''',
+]
