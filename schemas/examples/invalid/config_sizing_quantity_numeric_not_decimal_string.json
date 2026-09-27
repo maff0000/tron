@@ -1,0 +1,7 @@
+{
+  "config_schema_version": "1",
+  "sizing_mode": "fixed_canonical_quantity",
+  "base_quantities": {
+    "BTCUSD": 0.01
+  }
+}

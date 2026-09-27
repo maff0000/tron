@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/execution.schema.json",
+  "title": "TRON configuration: execution.yaml",
+  "description": "Structural/operational parameters relevant to order submission at the EXECUTE stage (PID §7 step 14). Deliberately bounded to submission-mechanics parameters (supported execution modes, retry/timeout behaviour). Risk/exposure/drawdown limit VALUES are out of scope for this file — see limits.schema.json. Contract-owner of this file: WI-D (WO-TRON-D1).",
+  "type": "object",
+  "properties": {
+    "config_schema_version": {
+      "const": "1",
+      "description": "Configuration schema major version for this file. Must equal \"1\". See 07-CONFIGURATION.md §2."
+    },
+    "supported_execution_modes": {
+      "type": "array",
+      "description": "Execution modes this TRON instance is configured to submit. This is TRON's own configured ceiling, not a broker capability declaration — actual per-broker/per-instrument support is a broker-profile matter (08-BROKER-PROFILES.md) verified against the broker adapter at negotiation/execution time. A mode configured here but unsupported by the broker adapter for a given instrument must not be silently attempted; that reconciliation is negotiation/execution behaviour (CAP-03/CAP-05), not this schema's concern.",
+      "items": {
+        "type": "string",
+        "enum": ["market", "limit"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "order_submission_timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum time, in milliseconds, TRON waits for a broker acknowledgement of a submitted order before treating the outcome as uncertain. An uncertain broker response is an execution-safety condition that fails closed for new risk (HR-14); how the uncertainty is then resolved is CAP-05 behaviour, not this schema's concern."
+    },
+    "order_submission_max_retries": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum number of resubmission attempts TRON is configured to make for a submission that did not receive a broker acknowledgement within order_submission_timeout_ms. 0 means no automatic resubmission is configured. Any retry behaviour must still preserve HR-13 (a retry must not silently become a second trade); enforcing that is CAP-05 implementation behaviour, not this schema's concern."
+    },
+    "retry_backoff_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Configured delay, in milliseconds, between a submission attempt and a subsequent retry attempt, when order_submission_max_retries permits one."
+    },
+    "broker_state_read_timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum time, in milliseconds, TRON waits when reading a broker/account/instrument state snapshot (e.g. at SNAPSHOT REQUIRED STATE, PID §7 step 11, or protection read-back, step 16) before treating that state as unavailable. An unavailable/stale state read is a broker-state-uncertainty condition that fails closed for new risk (HR-14)."
+    }
+  },
+  "required": [
+    "config_schema_version",
+    "supported_execution_modes",
+    "order_submission_timeout_ms",
+    "order_submission_max_retries",
+    "retry_backoff_ms",
+    "broker_state_read_timeout_ms"
+  ],
+  "additionalProperties": false
+}

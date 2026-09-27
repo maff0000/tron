@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/routing.schema.json",
+  "title": "TRON configuration: routing.yaml",
+  "description": "This TRON execution instance's own scope/eligibility configuration (PID §4.3: one execution instance per broker/account context). This is deliberately NOT an upstream-destination routing field on any canonical message — falcon.trade_action.v1 and tron.trade_intent.v1 have no such field by design (see 05-CONTRACTS.md §4/§5). This file exists per DEC-OPEN-06's PROPOSED (not decided) policy: 'actions remain broker-neutral; TRON instance configuration determines its eligible actions.' If Product Authority resolves DEC-OPEN-06 differently (e.g. a per-message routing/destination field), this schema's instance-scope fields remain valid alongside it — an execution instance still needs to know its own broker/account context and eligibility regardless of how per-message routing is eventually decided; nothing here forecloses that future answer. Contract-owner of this file: WI-D (WO-TRON-D1).",
+  "type": "object",
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier. Never a real account login, credential, or other sensitive infrastructure identifier (HR-10) — this is a symbolic label only, resolved to real broker/account context by a separate, non-repository secrets mechanism."
+    },
+    "instrument_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Instrument identifier string, consistent with mapping.schema.json's canonical_instrument keys."
+    }
+  },
+  "properties": {
+    "config_schema_version": {
+      "const": "1",
+      "description": "Configuration schema major version for this file. Must equal \"1\". See 07-CONFIGURATION.md §2."
+    },
+    "instance_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Stable label identifying this TRON execution instance. Used for operational identification and event correlation, never as a broker account identifier itself."
+    },
+    "broker_context": {
+      "$ref": "#/$defs/identifier",
+      "description": "Symbolic label identifying which single configured broker/account context this instance serves (PID §4.3). This is a reference to a separately-managed, non-repository credential/context binding, never a literal account number, login, or other sensitive identifier (HR-10)."
+    },
+    "eligible_instruments": {
+      "type": "array",
+      "description": "Canonical instruments this instance is eligible to act on. Absent means: all canonical instruments present in mapping.falcon.yaml's mapping table are eligible for this instance. An empty array explicitly means: no instrument is currently eligible (this instance accepts no OPEN actions), distinct from 'absent'.",
+      "items": { "$ref": "#/$defs/instrument_name" },
+      "uniqueItems": true
+    },
+    "eligible_actions": {
+      "type": "array",
+      "description": "falcon.trade_action.v1 'action' values this instance is eligible to process. Absent means: all action values defined by falcon.trade_action.v1 (OPEN, CLOSE, MODIFY, CANCEL) are eligible for this instance.",
+      "items": {
+        "type": "string",
+        "enum": ["OPEN", "CLOSE", "MODIFY", "CANCEL"]
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    }
+  },
+  "required": ["config_schema_version", "instance_id", "broker_context"],
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+# TRON configuration: eligibility/ranking policy inputs.
+# Validates against schemas/config/selection.schema.json.
+#
+# NOTE — conflict_policy reflects DEC-OPEN-01's currently PROPOSED initial
+# policy (skip the instrument for that selection cycle), and
+# existing_position_policy reflects DEC-OPEN-02's currently PROPOSED MVP
+# (one position per instrument). Neither is a decided Product Authority
+# requirement. See 07-CONFIGURATION.md and 11-DECISIONS.md.
+config_schema_version: "1"
+min_confidence: "0.6000"
+ranking_rule: "confidence_desc"
+conflict_policy: "skip_instrument"
+existing_position_policy: "one_position_per_instrument"

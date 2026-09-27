@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/limits.schema.json",
+  "title": "TRON configuration: limits.yaml",
+  "description": "Risk/exposure/drawdown limit STRUCTURE, per PID §13's checked-limit items (account exposure, instrument exposure, drawdown, daily loss, position count, order size, consecutive-loss policy) and enforced at the ACCOUNT AND RISK LIMITS check stage (PID §12 stage 4). All numeric values in config.example/limits.yaml are ILLUSTRATIVE PLACEHOLDERS ONLY — real limit values are not decided by WO-TRON-D1. This schema also holds on_hard_limit_breach, which represents DEC-OPEN-03 (response to hard-limit breach) as an OPEN, currently-PROPOSED policy, not a decided requirement — see 07-CONFIGURATION.md and 11-DECISIONS.md. Contract-owner of this file: WI-D (WO-TRON-D1). The specific checks that consume these values (e.g. exactly how 'account exposure' is computed) are owned by 06-CHECKS-CATALOGUE.md (WI-C); this file only supplies the configured numeric ceilings and policy selection.",
+  "type": "object",
+  "$defs": {
+    "instrument_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Instrument identifier string, consistent with mapping.schema.json's canonical_instrument keys."
+    },
+    "nonnegative_decimal_string": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Exact non-negative decimal representation (HR-05). Never a binary float. Upper-bound/range constraints beyond non-negativity (e.g. a percentage's <=100 bound) are not expressible as a JSON Schema pattern for an arbitrary-precision decimal string and are deferred to the semantic-validate pipeline stage (07-CONFIGURATION.md §2), not this schema."
+    }
+  },
+  "properties": {
+    "config_schema_version": {
+      "const": "1",
+      "description": "Configuration schema major version for this file. Must equal \"1\". See 07-CONFIGURATION.md §2."
+    },
+    "max_account_exposure": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Configured ceiling on account-level exposure. Unit and precise computation are defined by the consuming check ('Current gross exposure checked' / 'Projected gross exposure checked' etc., 06-CHECKS-CATALOGUE.md, WI-C); this field only supplies the configured numeric ceiling."
+    },
+    "max_instrument_exposure": {
+      "type": "object",
+      "description": "Map keyed by canonical_instrument to a configured per-instrument exposure ceiling ('Instrument exposure checked', PID §13). Absent means no per-instrument exposure ceiling beyond default_max_instrument_exposure (if present) or max_account_exposure applies.",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/instrument_name" },
+      "additionalProperties": { "$ref": "#/$defs/nonnegative_decimal_string" }
+    },
+    "default_max_instrument_exposure": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Fallback per-instrument exposure ceiling for a canonical instrument with no explicit entry in max_instrument_exposure. Absent means no per-instrument default is configured beyond max_account_exposure."
+    },
+    "max_drawdown_pct": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Configured maximum account drawdown, expressed as a decimal-string percentage (e.g. \"10.00\" means 10.00%). An upper bound of 100 is a semantic-validate concern (see nonnegative_decimal_string note), not enforced by this schema pattern."
+    },
+    "max_daily_loss": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Configured ceiling on daily realised+unrealised loss ('Daily loss limit checked', PID §13)."
+    },
+    "max_position_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Configured ceiling on the total number of concurrently open positions across the account ('Position count checked', PID §13)."
+    },
+    "max_order_size": {
+      "type": "object",
+      "description": "Map keyed by canonical_instrument to a configured per-instrument maximum order size ('Maximum order size checked', PID §13). Absent means no per-instrument order-size ceiling beyond default_max_order_size (if present) is configured for that instrument.",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/instrument_name" },
+      "additionalProperties": { "$ref": "#/$defs/nonnegative_decimal_string" }
+    },
+    "default_max_order_size": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Fallback maximum order size for a canonical instrument with no explicit entry in max_order_size. Absent means no per-instrument default order-size ceiling is configured."
+    },
+    "consecutive_loss_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_consecutive_losses"],
+      "properties": {
+        "max_consecutive_losses": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Configured threshold ('Consecutive loss count checked', PID §13). Reaching this many consecutive losing trades is treated as a hard-limit condition subject to on_hard_limit_breach."
+        }
+      },
+      "description": "Configured consecutive-loss policy structure."
+    },
+    "on_hard_limit_breach": {
+      "type": "string",
+      "enum": ["block_new_risk", "flatten_all_positions"],
+      "description": "Configured response when a hard account-level limit (including consecutive_loss_policy.max_consecutive_losses) is breached. 'block_new_risk' corresponds to DEC-OPEN-03's currently PROPOSED MVP (block new risk; existing positions remain protected by their broker-side SL/TP) — it is not a decided requirement. 'flatten_all_positions' is named here only so this schema does not foreclose a different eventual Product Authority answer; adding a further named response later is an additive, non-breaking change under this file's config_schema_version."
+    }
+  },
+  "required": [
+    "config_schema_version",
+    "max_account_exposure",
+    "max_drawdown_pct",
+    "max_daily_loss",
+    "max_position_count",
+    "consecutive_loss_policy",
+    "on_hard_limit_breach"
+  ],
+  "additionalProperties": false
+}

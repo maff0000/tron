@@ -1,0 +1,22 @@
+# TRON configuration: risk/exposure/drawdown limit structure.
+# Validates against schemas/config/limits.schema.json.
+#
+# All numeric values below are ILLUSTRATIVE PLACEHOLDERS ONLY. Real limit
+# values are not decided by WO-TRON-D1.
+#
+# NOTE — on_hard_limit_breach reflects DEC-OPEN-03's currently PROPOSED MVP
+# (block new risk; existing positions remain protected by their broker-side
+# SL/TP). DEC-OPEN-03 remains OPEN; this is not a decided Product Authority
+# requirement. See 07-CONFIGURATION.md and 11-DECISIONS.md.
+config_schema_version: "1"
+max_account_exposure: "10000.00"
+max_instrument_exposure:
+  BTCUSD: "5000.00"
+max_drawdown_pct: "10.00"
+max_daily_loss: "500.00"
+max_position_count: 5
+max_order_size:
+  BTCUSD: "0.0500"
+consecutive_loss_policy:
+  max_consecutive_losses: 3
+on_hard_limit_breach: "block_new_risk"

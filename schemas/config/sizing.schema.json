@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/sizing.schema.json",
+  "title": "TRON configuration: sizing.yaml",
+  "description": "Holds TRON-configured canonical base quantities, per DEC-OPEN-04's currently PROPOSED MVP quantity-ownership model: 'fixed canonical base quantity from TRON configuration.' DEC-OPEN-04 (whether canonical quantity originates upstream from FALCON or is determined by TRON sizing policy) remains an OPEN Product Authority decision — this schema is built to hold the proposed MVP's shape as directed by the WI-D work item, but 07-CONFIGURATION.md and 11-DECISIONS.md flag this as a proposed, not decided, quantity-ownership model. The 'sizing_mode' field is included specifically so a future Product Authority answer that changes the quantity-ownership model does not require silently overloading this same field with a different meaning; it names the mode this config's shape implements. Contract-owner of this file: WI-D (WO-TRON-D1).",
+  "type": "object",
+  "$defs": {
+    "instrument_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Instrument identifier string, consistent with mapping.schema.json's canonical_instrument keys."
+    },
+    "nonnegative_decimal_string": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Exact non-negative decimal representation (HR-05). Never a binary float."
+    }
+  },
+  "properties": {
+    "config_schema_version": {
+      "const": "1",
+      "description": "Configuration schema major version for this file. Must equal \"1\". See 07-CONFIGURATION.md §2."
+    },
+    "sizing_mode": {
+      "const": "fixed_canonical_quantity",
+      "description": "Names the sizing model this file's shape implements. 'fixed_canonical_quantity' is the only mode currently defined, corresponding to DEC-OPEN-04's proposed MVP. This is a PROPOSED, not decided, quantity-ownership model. If Product Authority decides a different model (e.g. quantity supplied upstream by FALCON, or a dynamic/risk-based sizing model), this file's schema will require a new mode value or revision — declaring the mode explicitly here means that future change is additive/identifiable rather than an implicit reinterpretation of an unlabelled field."
+    },
+    "base_quantities": {
+      "type": "object",
+      "description": "Map keyed by canonical_instrument (as used upstream in falcon.trade_action.v1.instrument) to the fixed canonical base quantity TRON sizing supplies for that instrument, decimal-string per HR-05. This value flows into tron.trade_intent.v1.canonical_requested_quantity under DEC-OPEN-04's proposed model; it does not by itself decide DEC-OPEN-04 (see tron.trade_intent.v1's own DEC-OPEN-04 note in 05-CONTRACTS.md §5).",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/instrument_name" },
+      "additionalProperties": { "$ref": "#/$defs/nonnegative_decimal_string" }
+    },
+    "default_base_quantity": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Fallback base quantity for a canonical instrument with no explicit entry in base_quantities. Absent means: an instrument without an explicit base_quantities entry has no configured sizing and is not eligible for OPEN sizing under this configuration."
+    }
+  },
+  "required": ["config_schema_version", "sizing_mode", "base_quantities"],
+  "additionalProperties": false
+}

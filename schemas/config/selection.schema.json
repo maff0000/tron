@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/selection.schema.json",
+  "title": "TRON configuration: selection.yaml",
+  "description": "Configured eligibility/ranking policy inputs applied at the canonical lifecycle's DETERMINE ELIGIBILITY / APPLY THRESHOLD / RESOLVE CONFLICT / RANK / SELECT stages (PID §7 steps 5-9). This schema declares the SHAPE of selection policy configuration only. It deliberately keeps 'conflict_policy' and 'existing_position_policy' as extensible enumerations rather than hard-coding PID §19's proposed resolutions as the only representable value, because DEC-OPEN-01 (conflicting candidate actions) and DEC-OPEN-02 (existing-position policy) remain OPEN Product Authority decisions. The concrete values used in config.example/selection.yaml are the PID's currently PROPOSED direction only, not a decided requirement — see 07-CONFIGURATION.md and 11-DECISIONS.md. Contract-owner of this file: WI-D (WO-TRON-D1). Ranking-rule and eligibility RULE BEHAVIOUR (what a named rule actually computes) is owned by 03-ARCHITECTURE.md / 04-TRADE-LIFECYCLE.md (WI-E/WI-F), not by this file, which only selects a rule by name and supplies its parameters.",
+  "type": "object",
+  "$defs": {
+    "confidence_string": {
+      "type": "string",
+      "pattern": "^(0(\\.\\d{1,4})?|1(\\.0{1,4})?)$",
+      "description": "Decimal string on the [0.0000, 1.0000] scale declared for falcon.trade_action.v1.confidence in 05-CONTRACTS.md. Kept identical here so a configured threshold is directly comparable to an incoming action's confidence value without unit conversion."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier."
+    }
+  },
+  "properties": {
+    "config_schema_version": {
+      "const": "1",
+      "description": "Configuration schema major version for this file. Must equal \"1\". See 07-CONFIGURATION.md §2."
+    },
+    "min_confidence": {
+      "$ref": "#/$defs/confidence_string",
+      "description": "Minimum falcon.trade_action.v1.confidence value (inclusive) an OPEN candidate must carry to remain eligible at the APPLY THRESHOLD stage (PID §7 step 6). This is a configured threshold value only; it does not resolve DEC-OPEN-08 (cross-strategy confidence calibration), which remains OPEN."
+    },
+    "ranking_rule": {
+      "$ref": "#/$defs/identifier",
+      "description": "Name of the configured ranking rule applied at the RANK stage (PID §7 step 8) among eligible candidates for the same instrument. This file selects a rule by name only; the rule's behaviour is defined and catalogued elsewhere (WI-E/WI-F), not by this schema."
+    },
+    "conflict_policy": {
+      "type": "string",
+      "enum": ["skip_instrument", "prefer_higher_confidence", "prefer_earlier_action"],
+      "description": "Configured policy applied at the RESOLVE CONFLICT stage (PID §7 step 7) when qualifying LONG and SHORT candidate actions exist simultaneously for the same instrument. 'skip_instrument' corresponds to DEC-OPEN-01's currently PROPOSED initial policy (skip the instrument for that selection cycle) — it is not a decided requirement. The other enum members are named here so the schema does not foreclose a different eventual Product Authority answer; adding a further named policy later is an additive, non-breaking change under this file's config_schema_version."
+    },
+    "existing_position_policy": {
+      "type": "string",
+      "enum": ["one_position_per_instrument", "allow_add_to_position"],
+      "description": "Configured policy for whether TRON may open a new position on an instrument that already has an open position. 'one_position_per_instrument' corresponds to DEC-OPEN-02's currently PROPOSED MVP — it is not a decided requirement. 'allow_add_to_position' is named here only so the schema does not foreclose a different eventual Product Authority answer."
+    }
+  },
+  "required": ["config_schema_version", "min_confidence", "ranking_rule", "conflict_policy", "existing_position_policy"],
+  "additionalProperties": false
+}

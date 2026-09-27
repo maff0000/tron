@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/mapping.schema.json",
+  "title": "TRON configuration: mapping.falcon.yaml",
+  "description": "Canonical-instrument-to-broker-symbol mapping table. Ties to falcon.trade_action.v1.instrument / tron.trade_intent.v1.canonical_instrument (input) and tron.trade_intent.v1.broker_instrument (output) — see 05-CONTRACTS.md (WI-B). Contract-owner of this file: WI-D (WO-TRON-D1). This schema defines symbol-resolution structure only; it does not define the fuller broker-profile data model (contract size, tick size, quantity constraints, etc.) described in 08-BROKER-PROFILES.md, which is not schema-backed in this increment.",
+  "type": "object",
+  "$defs": {
+    "instrument_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Instrument identifier string, consistent with the length bound used for 'instrument'/'canonical_instrument'/'broker_instrument' in the canonical contracts (05-CONTRACTS.md)."
+    }
+  },
+  "properties": {
+    "config_schema_version": {
+      "const": "1",
+      "description": "Configuration schema major version for this file. Must equal \"1\". See 07-CONFIGURATION.md §2 for the evolution policy."
+    },
+    "mappings": {
+      "type": "object",
+      "description": "Map keyed by canonical_instrument (as used upstream in falcon.trade_action.v1.instrument) to its broker symbol mapping entry. Using canonical_instrument as the object key structurally guarantees each canonical instrument maps to at most one entry — a duplicate-key situation cannot be represented, so no separate uniqueness check is needed.",
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/$defs/instrument_name" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["broker_instrument"],
+        "properties": {
+          "broker_instrument": {
+            "$ref": "#/$defs/instrument_name",
+            "description": "The broker-resolved symbol TRON's negotiation stage writes into tron.trade_intent.v1.broker_instrument for this canonical instrument."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether this mapping entry is currently active. Absent means true (enabled). Setting false disables negotiation for this canonical instrument without deleting the historical mapping record."
+          }
+        }
+      }
+    }
+  },
+  "required": ["config_schema_version", "mappings"],
+  "additionalProperties": false
+}
