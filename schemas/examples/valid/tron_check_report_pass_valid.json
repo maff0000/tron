@@ -1,0 +1,12 @@
+{
+  "contract_version": "1",
+  "check_id": "instrument-tradable",
+  "stage": 3,
+  "result": "PASS",
+  "observed_evidence": {
+    "instrument": "BTCUSD.raw",
+    "trading_enabled": true
+  },
+  "configured_parameters": {},
+  "timestamp": 1790600009000
+}

@@ -1,0 +1,14 @@
+{
+  "contract_version": "1",
+  "check_id": "max-order-size",
+  "stage": 4,
+  "result": "FAIL",
+  "observed_evidence": {
+    "requested_quantity": "0.0100"
+  },
+  "configured_parameters": {
+    "max_order_quantity": "0.0050"
+  },
+  "reason": "requested_quantity 0.0100 exceeds configured max_order_quantity 0.0050",
+  "timestamp": 1790600009200
+}

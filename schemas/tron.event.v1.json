@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/tron.event.v1.json",
+  "title": "tron.event.v1",
+  "description": "Canonical event envelope for TRON operational/audit events shipped to Trading Graylog (PID section 15). Contract-owner: WI-B (WO-TRON-D1). This envelope does not enumerate or close the event-type catalogue; the illustrative event names in PID section 15 are 'at minimum', and the authoritative catalogue is owned by WI-G (09-EVENTS-AND-GRAYLOG.md).",
+  "type": "object",
+  "$defs": {
+    "timestamp_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTC epoch milliseconds (HR-04)."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier."
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "1",
+      "description": "Canonical contract major version. Must equal \"1\" for tron.event.v1."
+    },
+    "event_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Stable identifier for this individual event instance."
+    },
+    "event_type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+      "description": "Dot-namespaced event type name (e.g. \"action.received\", \"execution.filled\"). Deliberately not a closed enum in this envelope contract: PID section 15 lists event types 'at minimum', and the full catalogue is owned by WI-G. This contract only constrains the naming shape, not the permitted set of values."
+    },
+    "occurred_at_ms": {
+      "$ref": "#/$defs/timestamp_ms",
+      "description": "UTC epoch-ms at which the underlying event occurred."
+    },
+    "action_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Correlated falcon.trade_action.v1 action_id, where an action identity exists for this event. Absent means no action identity is applicable to this event."
+    },
+    "intent_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Correlated tron.trade_intent.v1 intent_id, where an intent identity exists for this event. Absent means no intent identity is applicable to this event."
+    },
+    "order_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Correlated broker order identity (tron.execution_report.v1 broker_order_id), where an order identity exists for this event. Absent means no order identity is applicable to this event."
+    },
+    "execution_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Correlated individual broker execution/fill identity (tron.execution_report.v1 fills[].execution_id), where an execution identity exists for this event. Absent means no execution identity is applicable to this event."
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Top-level correlation identifier for the overall action-to-execution chain this event belongs to. Always required, independent of which of action_id/intent_id/order_id/execution_id happen to exist for this specific event (HR-15)."
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Open, event-type-specific structured detail. Absent means this event carries no detail beyond the envelope fields. Payload shape per event_type is owned by WI-G, not constrained by this envelope contract."
+    }
+  },
+  "required": [
+    "contract_version",
+    "event_id",
+    "event_type",
+    "occurred_at_ms",
+    "correlation_id"
+  ],
+  "additionalProperties": false
+}

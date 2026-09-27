@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/tron.check_report.v1.json",
+  "title": "tron.check_report.v1",
+  "description": "Canonical record of a single pre-trade check evaluation (PID section 12/13). Contract-owner: WI-B (WO-TRON-D1). This contract defines the record shape only; the check catalogue, stage numbering meaning and individual check IDs are owned by WI-C (06-CHECKS-CATALOGUE.md, checks.schema.json).",
+  "type": "object",
+  "$defs": {
+    "timestamp_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTC epoch milliseconds (HR-04)."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier."
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "1",
+      "description": "Canonical contract major version. Must equal \"1\" for tron.check_report.v1."
+    },
+    "check_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Stable check identifier, matching an entry in the WI-C check catalogue (06-CHECKS-CATALOGUE.md)."
+    },
+    "stage": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3, 4, 5, 6],
+      "description": "Ordered pre-trade check stage this check belongs to, per PID section 12 (0 = operational safety/kill state, ... 6 = projected post-trade state)."
+    },
+    "result": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "ERROR"],
+      "description": "Outcome of this check. ERROR is not equivalent to PASS (PID section 12); where an ERROR creates execution uncertainty, TRON fails closed for new risk (HR-14)."
+    },
+    "observed_evidence": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Structured evidence actually observed while evaluating this check (e.g. the specific balances, positions or state values inspected). Deliberately an open map: evidence shape varies per check_id and is not constrained by this envelope contract. Always present; an empty object means no additional evidence beyond the result itself was captured."
+    },
+    "configured_parameters": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Configuration parameter values this check was evaluated against (e.g. a configured limit or threshold). Deliberately an open map for the same reason as observed_evidence. Always present; an empty object means this check takes no configured parameters."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable explanation of the result. Required when result == \"FAIL\" (a failed check must explain why it failed, PID section 9.5). Optional for PASS and ERROR: absent for PASS means no explanation was needed; absent for ERROR means the error detail is being carried elsewhere (e.g. the durable event/journal record) rather than duplicated here."
+    },
+    "timestamp": {
+      "$ref": "#/$defs/timestamp_ms",
+      "description": "UTC epoch-ms at which this check was evaluated."
+    }
+  },
+  "required": [
+    "contract_version",
+    "check_id",
+    "stage",
+    "result",
+    "observed_evidence",
+    "configured_parameters",
+    "timestamp"
+  ],
+  "additionalProperties": false,
+  "if": {
+    "properties": { "result": { "const": "FAIL" } },
+    "required": ["result"]
+  },
+  "then": {
+    "required": ["reason"]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "contract_version": "1",
+  "intent_id": "int-20260927-000123",
+  "source_action_id": "act-20260927-000123",
+  "canonical_instrument": "BTCUSD",
+  "broker_instrument": "BTCUSD.raw",
+  "direction": "LONG",
+  "canonical_requested_quantity": "0.0100",
+  "negotiated_quantity": "0.0100",
+  "requested_protection": {
+    "stop_loss": "60500.00",
+    "take_profit": "63500.00"
+  },
+  "negotiated_protection": {
+    "stop_loss": "60480.00",
+    "take_profit": "63500.00"
+  },
+  "permitted_adjustments": [
+    {
+      "field": "negotiated_protection.stop_loss",
+      "rule_id": "rule-min-stop-distance",
+      "original_value": "60500.00",
+      "adjusted_value": "60480.00"
+    }
+  ],
+  "config_identities": {
+    "mapping": "sha256:1f3a9c2e0b7d4e5f6a7b8c9d0e1f2a3b",
+    "routing": "sha256:2a4b6c8d0e1f2a3b4c5d6e7f8091a2b3",
+    "sizing": "sha256:3b5c7d9e1f2031425364758697a8b9c"
+  },
+  "created_at_ms": 1790600010000,
+  "negotiated_at_ms": 1790600010500,
+  "correlation_id": "corr-20260927-000123"
+}

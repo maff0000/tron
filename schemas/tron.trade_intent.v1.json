@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/tron.trade_intent.v1.json",
+  "title": "tron.trade_intent.v1",
+  "description": "Canonical executable intent produced by TRON's negotiation stage (canonical lifecycle step 10) from a falcon.trade_action.v1. Contract-owner: WI-B (WO-TRON-D1). Defines structure/constraints only; negotiation rule behaviour is owned elsewhere (CAP-03 / WI-E, WI-F).",
+  "type": "object",
+  "$defs": {
+    "timestamp_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTC epoch milliseconds (HR-04)."
+    },
+    "nonnegative_decimal_string": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Exact non-negative decimal representation (HR-05). Never a binary float."
+    },
+    "decimal_string": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Exact decimal representation, sign permitted (HR-05). Never a binary float."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier."
+    },
+    "protection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stop_loss", "take_profit"],
+      "properties": {
+        "stop_loss": { "$ref": "#/$defs/nonnegative_decimal_string" },
+        "take_profit": { "$ref": "#/$defs/nonnegative_decimal_string" }
+      },
+      "description": "A stop-loss/take-profit pair. When a protection object is present, both legs are required together (HR-01 applies to OPEN intents)."
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "1",
+      "description": "Canonical contract major version. Must equal \"1\" for tron.trade_intent.v1."
+    },
+    "intent_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Stable identifier for this negotiated intent. Used for idempotency (HR-13) and correlation (HR-15)."
+    },
+    "source_action_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "action_id of the falcon.trade_action.v1 this intent was negotiated from."
+    },
+    "canonical_instrument": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "The upstream (pre-negotiation) canonical instrument identifier, copied from the source action."
+    },
+    "broker_instrument": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "The broker-resolved instrument symbol produced by TRON's symbol mapping at the negotiation boundary."
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["LONG", "SHORT"],
+      "description": "Negotiated directional side for this intent."
+    },
+    "canonical_requested_quantity": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "The upstream canonical requested quantity, in canonical (non-lot) units, decimal-string per HR-05. This contract records whatever value negotiation received; it does not decide whether that value originates upstream or from TRON sizing policy (DEC-OPEN-04 remains OPEN)."
+    },
+    "negotiated_quantity": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "The broker-valid quantity produced by TRON's negotiation boundary (HR-09: broker-specific quantity conversion happens here, not upstream). Still an exact decimal string, not a raw binary float."
+    },
+    "requested_protection": {
+      "$ref": "#/$defs/protection",
+      "description": "The protection (stop-loss/take-profit) requested by the source action, prior to negotiation. Absent means the source action's type does not carry a protection request applicable at this stage (for example, an intent not derived from an OPEN action); this contract does not decide which action types require protection — see HR-01 and WI-F."
+    },
+    "negotiated_protection": {
+      "$ref": "#/$defs/protection",
+      "description": "The protection (stop-loss/take-profit) TRON actually intends to submit to the broker after negotiation. Absent has the same meaning as for requested_protection: not applicable to this intent's type, not a waiver of HR-01 for OPEN intents."
+    },
+    "permitted_adjustments": {
+      "type": "array",
+      "description": "Adjustments negotiation was permitted to make to the canonical request, each attributed to the rule responsible. Absent or an empty array both mean: no adjustments were made during negotiation. These two representations are equivalent.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "rule_id"],
+        "properties": {
+          "field": {
+            "$ref": "#/$defs/identifier",
+            "description": "Name of the adjusted field (e.g. \"negotiated_quantity\", \"negotiated_protection.stop_loss\")."
+          },
+          "rule_id": {
+            "$ref": "#/$defs/identifier",
+            "description": "Stable identifier of the configured rule responsible for this adjustment."
+          },
+          "original_value": {
+            "$ref": "#/$defs/decimal_string",
+            "description": "Value before adjustment, when representable as a single decimal string."
+          },
+          "adjusted_value": {
+            "$ref": "#/$defs/decimal_string",
+            "description": "Value after adjustment, when representable as a single decimal string."
+          }
+        }
+      }
+    },
+    "config_identities": {
+      "type": "object",
+      "description": "Map of configuration-file identity name (e.g. \"mapping\", \"routing\", \"selection\", \"sizing\", \"execution\") to the hash/version identity of the configuration responsible for this negotiation (HR-15, section 10). Deliberately an open-keyed map: the set of configuration files is defined in 07-CONFIGURATION.md (WI-D), not by this contract.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "created_at_ms": {
+      "$ref": "#/$defs/timestamp_ms",
+      "description": "When this intent record was created."
+    },
+    "negotiated_at_ms": {
+      "$ref": "#/$defs/timestamp_ms",
+      "description": "When negotiation for this intent completed."
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Correlation identifier tying this intent to its source action and downstream execution/journal/event records (HR-15)."
+    }
+  },
+  "required": [
+    "contract_version",
+    "intent_id",
+    "source_action_id",
+    "canonical_instrument",
+    "broker_instrument",
+    "direction",
+    "canonical_requested_quantity",
+    "negotiated_quantity",
+    "config_identities",
+    "created_at_ms",
+    "negotiated_at_ms",
+    "correlation_id"
+  ],
+  "additionalProperties": false
+}

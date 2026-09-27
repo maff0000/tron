@@ -1,0 +1,16 @@
+{
+  "contract_version": "1",
+  "intent_id": "int-20260927-000132",
+  "source_action_id": "act-20260927-000132",
+  "canonical_instrument": "BTCUSD",
+  "broker_instrument": "BTCUSD.raw",
+  "direction": "LONG",
+  "canonical_requested_quantity": "0.0100",
+  "negotiated_quantity": 0.01,
+  "config_identities": {
+    "mapping": "sha256:1f3a9c2e0b7d4e5f6a7b8c9d0e1f2a3b"
+  },
+  "created_at_ms": 1790600020000,
+  "negotiated_at_ms": 1790600020500,
+  "correlation_id": "corr-20260927-000132"
+}

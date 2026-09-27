@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/tron.execution_report.v1.json",
+  "title": "tron.execution_report.v1",
+  "description": "FIX-aligned execution outcome for a negotiated tron.trade_intent.v1. Contract-owner: WI-B (WO-TRON-D1). Uses market-standard/FIX-aligned terminology per PID section 8, without adopting the FIX wire protocol. Per the binding lifecycle-semantics ruling, the order_state enum is exactly the set named in PID section 8; this contract does not add states or encode transition rules (owned by WI-F).",
+  "type": "object",
+  "$defs": {
+    "timestamp_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTC epoch milliseconds (HR-04)."
+    },
+    "nonnegative_decimal_string": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Exact non-negative decimal representation (HR-05). Never a binary float."
+    },
+    "decimal_string": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Exact decimal representation, sign permitted (HR-05). Never a binary float."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier."
+    },
+    "currency_code": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217 three-letter currency code."
+    },
+    "fill_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["execution_id", "filled_at_ms", "fill_quantity", "fill_price"],
+      "properties": {
+        "execution_id": {
+          "$ref": "#/$defs/identifier",
+          "description": "Stable identifier for this individual broker execution/fill event. Used for idempotency (HR-13) so a re-read of broker state does not double-count a fill."
+        },
+        "filled_at_ms": {
+          "$ref": "#/$defs/timestamp_ms",
+          "description": "UTC epoch-ms at which the broker reports this fill occurred."
+        },
+        "fill_quantity": {
+          "$ref": "#/$defs/nonnegative_decimal_string",
+          "description": "Quantity filled by this specific execution event, decimal string (HR-05)."
+        },
+        "fill_price": {
+          "$ref": "#/$defs/nonnegative_decimal_string",
+          "description": "Price at which this specific execution event filled, decimal string (HR-05)."
+        },
+        "commission": {
+          "$ref": "#/$defs/decimal_string",
+          "description": "Commission/fee charged for this fill, when known. May be negative to represent a rebate. Absent means commission for this fill is not yet known or not applicable."
+        },
+        "commission_currency": {
+          "$ref": "#/$defs/currency_code",
+          "description": "ISO 4217 currency of the commission amount. Absent has meaning only in conjunction with an absent commission."
+        }
+      }
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "1",
+      "description": "Canonical contract major version. Must equal \"1\" for tron.execution_report.v1."
+    },
+    "report_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Stable identifier for this execution_report snapshot/instance."
+    },
+    "intent_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "intent_id of the tron.trade_intent.v1 this report describes the outcome of."
+    },
+    "action_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "action_id of the originating falcon.trade_action.v1, for end-to-end correlation (HR-15)."
+    },
+    "broker_order_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "The broker's own order identifier. Absent means the broker never acknowledged/assigned an order identifier for this intent (for example, a pre-submission validation Rejected outcome)."
+    },
+    "order_state": {
+      "type": "string",
+      "enum": ["New", "PartiallyFilled", "Filled", "Canceled", "Rejected", "Expired"],
+      "description": "Broker order state, using exactly the state set named in PID section 8. This contract does not define how or why a given state was reached; see 04-TRADE-LIFECYCLE.md (WI-F)."
+    },
+    "instrument": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Broker-resolved instrument symbol, matching the intent's broker_instrument."
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["LONG", "SHORT"],
+      "description": "Direction of the order this report describes."
+    },
+    "requested_quantity": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Quantity that was submitted to the broker for this order (mirrors the intent's negotiated_quantity), decimal string (HR-05)."
+    },
+    "cumulative_filled_quantity": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Sum of fill_quantity across all fills reported for this order so far, decimal string (HR-05)."
+    },
+    "leaves_quantity": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "The broker's most recently observed remaining unfilled quantity for this order, when reported. Absent means this value was not read back or was not reported by the broker for this snapshot; its absence does not itself indicate a particular order_state."
+    },
+    "fills": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fill_event" },
+      "description": "Zero or more individual broker execution/fill events for this order, supporting partial fills and multiple broker execution events without treating the order as a single atomic event. An empty array means no fills have occurred yet for this order."
+    },
+    "rejection_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Explanation of why the broker/adapter rejected this order. Required when order_state == \"Rejected\" so a rejection is never left unexplained; absent for all other order_state values, where it has no meaning."
+    },
+    "last_updated_ms": {
+      "$ref": "#/$defs/timestamp_ms",
+      "description": "UTC epoch-ms at which this report snapshot was produced (i.e. when broker state was read back)."
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Correlation identifier tying this report to its source action, intent and journal/event records (HR-15)."
+    }
+  },
+  "required": [
+    "contract_version",
+    "report_id",
+    "intent_id",
+    "action_id",
+    "order_state",
+    "instrument",
+    "direction",
+    "requested_quantity",
+    "cumulative_filled_quantity",
+    "fills",
+    "last_updated_ms",
+    "correlation_id"
+  ],
+  "additionalProperties": false,
+  "if": {
+    "properties": { "order_state": { "const": "Rejected" } },
+    "required": ["order_state"]
+  },
+  "then": {
+    "required": ["rejection_reason"]
+  }
+}
