@@ -1,0 +1,14 @@
+{
+  "contract_version": "1",
+  "event_id": "evt-20260927-000123-007",
+  "event_type": "execution.filled",
+  "occurred_at_ms": 1790600012000,
+  "action_id": "act-20260927-000123",
+  "intent_id": "int-20260927-000123",
+  "order_id": "broker-ord-889231",
+  "execution_id": "exec-889231-2",
+  "correlation_id": "corr-20260927-000123",
+  "payload": {
+    "cumulative_filled_quantity": "0.0100"
+  }
+}

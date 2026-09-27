@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/falcon.trade_action.v1.json",
+  "title": "falcon.trade_action.v1",
+  "description": "Canonical candidate trade action supplied by FALCON to TRON via the board. Contract-owner: WI-B (WO-TRON-D1). This contract defines structure/constraints only; it does not decide ranking, selection, sizing or any DEC-OPEN item.",
+  "type": "object",
+  "$defs": {
+    "timestamp_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UTC epoch milliseconds (HR-04)."
+    },
+    "nonnegative_decimal_string": {
+      "type": "string",
+      "pattern": "^\\d+(\\.\\d+)?$",
+      "description": "Exact non-negative decimal representation (HR-05). Never a binary float."
+    },
+    "confidence_string": {
+      "type": "string",
+      "pattern": "^(0(\\.\\d{1,4})?|1(\\.0{1,4})?)$",
+      "description": "Decimal string on a closed [0.0000, 1.0000] scale, up to 4 decimal places. Scale declared by WI-B as a bounded contract-design detail (see 05-CONTRACTS.md); this is NOT DEC-OPEN-08 cross-strategy calibration, which remains OPEN."
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable opaque identifier."
+    }
+  },
+  "properties": {
+    "contract_version": {
+      "const": "1",
+      "description": "Canonical contract major version. Must equal \"1\" for falcon.trade_action.v1."
+    },
+    "action_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "Stable identifier for this action, unique per FALCON action instance. Used for idempotency (HR-13) and correlation (HR-15)."
+    },
+    "action": {
+      "type": "string",
+      "enum": ["OPEN", "CLOSE", "MODIFY", "CANCEL"],
+      "description": "The requested action type. This contract does not define what TRON does with each value; see 04-TRADE-LIFECYCLE.md (WI-F) for lifecycle semantics."
+    },
+    "instrument": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Canonical (upstream, pre-broker-resolution) instrument identifier as understood by FALCON. Broker-specific resolution happens later, at TRON's negotiation boundary (see tron.trade_intent.v1)."
+    },
+    "side": {
+      "type": "string",
+      "enum": ["LONG", "SHORT"],
+      "description": "Requested directional side. REQUIRED when action == OPEN. For CLOSE/MODIFY/CANCEL, this field's applicability to an existing position's side is a lifecycle-semantics matter owned by WI-F; this schema neither requires nor forbids it for those action values, and its absence there asserts nothing about the targeted position's side."
+    },
+    "stop_loss": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Requested stop-loss price. REQUIRED when action == OPEN (HR-01). Decimal string, never a binary float (HR-05)."
+    },
+    "take_profit": {
+      "$ref": "#/$defs/nonnegative_decimal_string",
+      "description": "Requested take-profit price. REQUIRED when action == OPEN (HR-01). Decimal string, never a binary float (HR-05)."
+    },
+    "confidence": {
+      "$ref": "#/$defs/confidence_string",
+      "description": "Strategy-declared confidence for this action on the WI-B-declared [0.0000,1.0000] decimal-string scale. REQUIRED when action == OPEN (confidence-based selection/ranking applies to OPEN candidates; see 03-ARCHITECTURE.md / CAP-02). Absent for CLOSE/MODIFY/CANCEL means no ranking confidence is asserted for that action; those action types are not ranked by confidence under this contract."
+    },
+    "valid_until_ms": {
+      "$ref": "#/$defs/timestamp_ms",
+      "description": "UTC epoch-ms after which this action is stale and must not be executed (EXPIRE stage, canonical lifecycle step 3). Always required, regardless of action type."
+    },
+    "strategy_ref": {
+      "$ref": "#/$defs/identifier",
+      "description": "Reference to the originating strategy. Always required for traceability (HR-15)."
+    },
+    "signal_ref": {
+      "$ref": "#/$defs/identifier",
+      "description": "Reference to the originating signal, when this action was generated in direct response to one. Absent means this action was not generated from a single discrete signal (for example, an internally-triggered CANCEL); traceability then relies on strategy_ref and/or supersedes_action_id."
+    },
+    "supersedes_action_id": {
+      "$ref": "#/$defs/identifier",
+      "description": "action_id of a prior action this action supersedes, when applicable. Absent means this action does not supersede any prior action. This field only records the reference; supersession handling itself is lifecycle behaviour owned by WI-F."
+    },
+    "position_action_ref": {
+      "$ref": "#/$defs/identifier",
+      "description": "Reference identifying the existing position and/or prior action this action targets (typically used by CLOSE, MODIFY, CANCEL). Absent means this action does not target an existing position or a prior action (for example, a new OPEN). This field only records the reference; how TRON resolves or validates it is lifecycle behaviour owned by WI-F."
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Open, unvalidated extension bag for forward-compatible, non-canonical strategy-specific data. Absent means no extension data is attached. Fields inside extensions are deliberately NOT schema-controlled; canonical fields never live here."
+    }
+  },
+  "required": [
+    "contract_version",
+    "action_id",
+    "action",
+    "instrument",
+    "valid_until_ms",
+    "strategy_ref"
+  ],
+  "additionalProperties": false,
+  "if": {
+    "properties": { "action": { "const": "OPEN" } },
+    "required": ["action"]
+  },
+  "then": {
+    "required": ["side", "stop_loss", "take_profit", "confidence"]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "contract_version": "1",
+  "report_id": "rep-20260927-000123-002",
+  "intent_id": "int-20260927-000123",
+  "action_id": "act-20260927-000123",
+  "broker_order_id": "broker-ord-889231",
+  "order_state": "Filled",
+  "instrument": "BTCUSD.raw",
+  "direction": "LONG",
+  "requested_quantity": "0.0100",
+  "cumulative_filled_quantity": "0.0100",
+  "fills": [
+    {
+      "execution_id": "exec-889231-1",
+      "filled_at_ms": 1790600011200,
+      "fill_quantity": "0.0060",
+      "fill_price": "60510.25",
+      "commission": "0.05",
+      "commission_currency": "USD"
+    },
+    {
+      "execution_id": "exec-889231-2",
+      "filled_at_ms": 1790600011800,
+      "fill_quantity": "0.0040",
+      "fill_price": "60512.00",
+      "commission": "0.03",
+      "commission_currency": "USD"
+    }
+  ],
+  "last_updated_ms": 1790600012000,
+  "correlation_id": "corr-20260927-000123"
+}

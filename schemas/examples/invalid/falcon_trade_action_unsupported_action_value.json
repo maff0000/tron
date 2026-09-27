@@ -1,0 +1,12 @@
+{
+  "contract_version": "1",
+  "action_id": "act-20260927-000127",
+  "action": "REVERSE",
+  "instrument": "BTCUSD",
+  "side": "LONG",
+  "stop_loss": "60500.00",
+  "take_profit": "63500.00",
+  "confidence": "0.7500",
+  "valid_until_ms": 1790600000000,
+  "strategy_ref": "strategy-btc-momentum-v1"
+}

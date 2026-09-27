@@ -1,0 +1,12 @@
+{
+  "contract_version": "1",
+  "action_id": "act-20260927-000130",
+  "action": "OPEN",
+  "instrument": "BTCUSD",
+  "side": "LONG",
+  "stop_loss": "60500.00",
+  "take_profit": "63500.00",
+  "confidence": "0.7500",
+  "valid_until_ms": "2026-09-27T00:00:00Z",
+  "strategy_ref": "strategy-btc-momentum-v1"
+}
