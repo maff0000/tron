@@ -32,6 +32,23 @@ Per the binding Central-Architecture ruling for this work item, **T9 (repository
 
 This section is populated by the PL, running `gitleaks` directly against the final integrated branch, separately from WI-I's work. *(Not populated by WI-I. Left intentionally blank pending PL action.)*
 
+**T9 evidence, recorded by the PL (Forge PL, not WI-I) per the binding Central-Architecture ruling for this run:**
+
+```
+Command:    gitleaks detect --source . -v
+Tool:       gitleaks v8.30.1
+Repository: maff0000/tron
+Branch:     wo/WO-TRON-D1
+Commit:     9b1bf70606af7dd5894cf2469cbdf41a7d6125e2
+Scope:      full branch history at time of scan (14 commits)
+Result:     "14 commits scanned." / "no leaks found"
+```
+
+This scan was run directly against the fully-integrated D1 branch (all of WI-A through WI-I merged, plus the post-integration `05-CONTRACTS.md` prose fix), at the exact commit the Auditor is dispatched against — not the PL's earlier discovery-phase scan (which covered only `PID.md` and the pre-existing safety baseline, before any Wave 1-4 content existed) and not any per-commit pre-commit-hook scan alone (each of the 9 work-item commits and 8 merge commits also passed `gitleaks protect --staged --redact --verbose` individually via the repository's active pre-commit hook, `core.hooksPath=scripts/hooks`, as a first line of defence — this full-history `detect` run is the independent, final confirmation covering the whole branch as one unit).
+
+PID §22 ("repository secret scanning remains active") and §1.2's requirement that secrets/credentials/account identifiers/sensitive infrastructure identifiers never enter the repository are satisfied as OBSERVED fact (PID §28 evidence taxonomy) at this commit.
+
+
 ---
 
 ## 3. T8 non-vacuity finding and resolution
