@@ -1,0 +1,15 @@
+# TRON configuration: fixed canonical base quantities.
+# Validates against schemas/config/sizing.schema.json.
+#
+# NOTE — this file's entire shape reflects DEC-OPEN-04's currently PROPOSED
+# MVP quantity-ownership model (fixed canonical base quantity from TRON
+# configuration). DEC-OPEN-04 remains OPEN; this is not a decided Product
+# Authority requirement. See 07-CONFIGURATION.md and 11-DECISIONS.md.
+# The quantity values below are illustrative placeholders only.
+config_schema_version: "1"
+sizing_mode: "fixed_canonical_quantity"
+base_quantities:
+  BTCUSD: "0.0100"
+# default_base_quantity intentionally omitted: an instrument with no explicit
+# base_quantities entry (e.g. XAUUSD, before it is proven per PID §18) has no
+# configured sizing and is not eligible for OPEN sizing under this example.

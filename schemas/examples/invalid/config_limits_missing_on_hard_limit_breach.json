@@ -1,0 +1,10 @@
+{
+  "config_schema_version": "1",
+  "max_account_exposure": "10000.00",
+  "max_drawdown_pct": "10.00",
+  "max_daily_loss": "500.00",
+  "max_position_count": 5,
+  "consecutive_loss_policy": {
+    "max_consecutive_losses": 3
+  }
+}

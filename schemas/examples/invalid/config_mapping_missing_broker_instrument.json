@@ -1,0 +1,8 @@
+{
+  "config_schema_version": "1",
+  "mappings": {
+    "BTCUSD": {
+      "enabled": true
+    }
+  }
+}

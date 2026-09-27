@@ -1,0 +1,7 @@
+{
+  "config_schema_version": "1",
+  "min_confidence": "0.6000",
+  "ranking_rule": "confidence_desc",
+  "conflict_policy": "allow_both",
+  "existing_position_policy": "one_position_per_instrument"
+}

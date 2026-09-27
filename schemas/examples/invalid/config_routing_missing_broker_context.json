@@ -1,0 +1,5 @@
+{
+  "config_schema_version": "1",
+  "instance_id": "tron-instance-example-01",
+  "eligible_instruments": ["BTCUSD"]
+}

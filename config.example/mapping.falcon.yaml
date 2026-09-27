@@ -1,0 +1,12 @@
+# TRON configuration: canonical-instrument-to-broker-symbol mapping table.
+# Validates against schemas/config/mapping.schema.json.
+# All values here are illustrative placeholders only — no real account or
+# infrastructure identifiers appear in this file (HR-10).
+config_schema_version: "1"
+mappings:
+  BTCUSD:
+    broker_instrument: "BTCUSD.raw"
+    enabled: true
+  XAUUSD:
+    broker_instrument: "XAUUSD.raw"
+    enabled: false

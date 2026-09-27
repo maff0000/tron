@@ -1,0 +1,8 @@
+{
+  "config_schema_version": "1",
+  "supported_execution_modes": ["stop"],
+  "order_submission_timeout_ms": 5000,
+  "order_submission_max_retries": 2,
+  "retry_backoff_ms": 1000,
+  "broker_state_read_timeout_ms": 3000
+}

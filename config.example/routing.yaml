@@ -1,0 +1,20 @@
+# TRON configuration: this instance's own scope/eligibility configuration.
+# Validates against schemas/config/routing.schema.json.
+#
+# NOTE — DEC-OPEN-06 (routing) is OPEN. This file reflects DEC-OPEN-06's
+# currently PROPOSED direction only (actions remain broker-neutral; TRON
+# instance configuration determines its eligible actions), not a decided
+# Product Authority requirement. See 07-CONFIGURATION.md and
+# 11-DECISIONS.md.
+#
+# broker_context is a symbolic label only — never a real account number,
+# login, or other sensitive identifier (HR-10). It is resolved to an actual
+# broker/account context by a separate, non-repository secrets mechanism.
+config_schema_version: "1"
+instance_id: "tron-instance-example-01"
+broker_context: "example-broker-context-01"
+eligible_instruments:
+  - BTCUSD
+eligible_actions:
+  - OPEN
+  - CLOSE
