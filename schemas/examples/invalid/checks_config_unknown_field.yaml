@@ -1,0 +1,14 @@
+# Deliberately INVALID example for schemas/config/checks.schema.json.
+# Intended failure: unrecognised field `debug_note` on a check_definition object.
+# Expected failing keyword: additionalProperties at /checks/CHK-001.
+config_version: "1"
+checks:
+  CHK-001:
+    check_id: "CHK-001"
+    name: "Ledger available"
+    stage: 1
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+    debug_note: "this field is not part of the schema"

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tron.internal/schemas/config/checks.schema.json",
+  "title": "tron.config.checks",
+  "description": "Schema for TRON's checks.yaml configuration file (PID section 10). Defines which pre-trade checks are enabled and their configured parameters. Contract-owner: WI-C (WO-TRON-D1). The check catalogue itself (names, stage meaning, required inputs, PASS/FAIL/ERROR semantics, MVP/BACKLOG status) is documented in docs/06-CHECKS-CATALOGUE.md, also owned by WI-C; this schema constrains only the configuration-file shape, kept deliberately consistent with schemas/tron.check_report.v1.json (same check_id identifier pattern, same stage enum [0,1,2,3,4,5,6]) so the two do not drift.",
+  "type": "object",
+  "$defs": {
+    "check_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Stable check identifier. Must match an entry in docs/06-CHECKS-CATALOGUE.md. Same pattern as tron.check_report.v1.check_id."
+    },
+    "stage": {
+      "type": "integer",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "description": "Ordered pre-trade check stage, per PID section 12 (0 = operational safety/kill state, ... 6 = projected post-trade state). Same enum as tron.check_report.v1.stage."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "MVP",
+        "BACKLOG"
+      ],
+      "description": "This check's MVP/BACKLOG classification as documented in docs/06-CHECKS-CATALOGUE.md section 4. Documentation-level categorisation only; does not itself authorise a capability."
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "PA-13",
+        "WI-C-ADD"
+      ],
+      "description": "PA-13 = a Product Authority check individually named in PID section 13. WI-C-ADD = an engineer-identified addition per PID section 12's minimum-consideration list, explicitly not attributed to Product Authority (PID section 13's own permission for such additions)."
+    },
+    "check_definition": {
+      "type": "object",
+      "description": "One configured check. parameters is deliberately an open map (additionalProperties: true) because its shape varies per check_id, mirroring the same open-map convention already used by tron.check_report.v1's observed_evidence/configured_parameters (05-CONTRACTS.md section 3).",
+      "required": [
+        "check_id",
+        "name",
+        "stage",
+        "status",
+        "origin",
+        "enabled",
+        "parameters"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "check_id": {
+          "$ref": "#/$defs/check_id",
+          "description": "Must equal the map key this object is stored under in the enclosing checks object (redundant by design, mirroring the contract_version convention in 05-CONTRACTS.md section 2 -- a consumer inspecting one check_definition value in isolation can still identify which check it is)."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable name, matching docs/06-CHECKS-CATALOGUE.md."
+        },
+        "stage": {
+          "$ref": "#/$defs/stage"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "origin": {
+          "$ref": "#/$defs/origin"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this check is active at runtime. A BACKLOG-status check may be present in configuration (for forward-compatible documentation of intent) while enabled: false, since its underlying capability does not exist yet."
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Configured parameter values for this check (e.g. a threshold), matching the Configuration Parameters column for this check_id in docs/06-CHECKS-CATALOGUE.md. An empty object means this check takes no configured parameters. Open map: shape varies per check_id and is not constrained by this schema (same rationale as tron.check_report.v1.configured_parameters)."
+        }
+      }
+    }
+  },
+  "properties": {
+    "config_version": {
+      "const": "1",
+      "description": "Configuration-file format version. Must equal \"1\"."
+    },
+    "checks": {
+      "type": "object",
+      "description": "Map of check_id -> check definition. Using an object keyed by check_id (rather than an array) makes duplicate check_id entries structurally impossible, which an array of objects could not guarantee. Every key must also equal its value's own check_id field (see check_definition.check_id's description); this cross-field equality is enforced by the loader/tests, not expressible as a portable JSON Schema constraint.",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/check_id"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/check_definition"
+      }
+    }
+  },
+  "required": [
+    "config_version",
+    "checks"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,701 @@
+# TRON checks configuration -- EXAMPLE FILE
+#
+# Illustrative only. Every numeric/threshold value below is a placeholder used solely to prove
+# this file validates against schemas/config/checks.schema.json (PID section 23 T4). None of
+# these values is a production threshold or a Product Authority decision (PID section 1.2,
+# section 21 D1 Non-Goals). Owner: WI-C (WO-TRON-D1). Every check_id below is defined in
+# docs/06-CHECKS-CATALOGUE.md; see that document's Notes column for BACKLOG/OPEN caveats.
+#
+# This example deliberately includes every catalogue check (CHK-001..CHK-082), each with
+# enabled: true for MVP-status checks and enabled: false for BACKLOG-status checks (their
+# underlying capability does not exist yet, per docs/06-CHECKS-CATALOGUE.md section 4), so that
+# PID section 23 T5's documentation<->schema<->config reconciliation is exact in both directions.
+config_version: "1"
+checks:
+  CHK-001:
+    check_id: "CHK-001"
+    name: "Ledger available"
+    stage: 1
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-002:
+    check_id: "CHK-002"
+    name: "Ledger current"
+    stage: 1
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      max_ledger_age_ms: 5000
+  CHK-003:
+    check_id: "CHK-003"
+    name: "Last reconciliation successful"
+    stage: 1
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-004:
+    check_id: "CHK-004"
+    name: "Account balance reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      balance_tolerance: "0.01"
+  CHK-005:
+    check_id: "CHK-005"
+    name: "Account equity reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      equity_tolerance: "0.01"
+  CHK-006:
+    check_id: "CHK-006"
+    name: "Open positions reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-007:
+    check_id: "CHK-007"
+    name: "Pending orders reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-008:
+    check_id: "CHK-008"
+    name: "Filled orders reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-009:
+    check_id: "CHK-009"
+    name: "Cancelled orders reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-010:
+    check_id: "CHK-010"
+    name: "Rejected orders reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-011:
+    check_id: "CHK-011"
+    name: "Partial fills reconciled"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-012:
+    check_id: "CHK-012"
+    name: "No orphan positions"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-013:
+    check_id: "CHK-013"
+    name: "No orphan orders"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-014:
+    check_id: "CHK-014"
+    name: "No duplicate orders"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-015:
+    check_id: "CHK-015"
+    name: "No duplicate fills"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-016:
+    check_id: "CHK-016"
+    name: "No unresolved execution discrepancies"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-017:
+    check_id: "CHK-017"
+    name: "No unresolved position discrepancies"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-018:
+    check_id: "CHK-018"
+    name: "No stale account state"
+    stage: 1
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      max_account_state_age_ms: 5000
+  CHK-019:
+    check_id: "CHK-019"
+    name: "No stale broker state"
+    stage: 1
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      max_broker_state_age_ms: 5000
+  CHK-020:
+    check_id: "CHK-020"
+    name: "Proposed order not already submitted"
+    stage: 2
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-021:
+    check_id: "CHK-021"
+    name: "Proposed order not already filled"
+    stage: 2
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-022:
+    check_id: "CHK-022"
+    name: "Existing position state checked"
+    stage: 2
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-023:
+    check_id: "CHK-023"
+    name: "Existing pending order state checked"
+    stage: 2
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-024:
+    check_id: "CHK-024"
+    name: "Available cash checked"
+    stage: 4
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-025:
+    check_id: "CHK-025"
+    name: "Available margin checked"
+    stage: 4
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-026:
+    check_id: "CHK-026"
+    name: "Used margin checked"
+    stage: 4
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-027:
+    check_id: "CHK-027"
+    name: "Free margin checked"
+    stage: 4
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-028:
+    check_id: "CHK-028"
+    name: "Required margin checked"
+    stage: 4
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-029:
+    check_id: "CHK-029"
+    name: "Projected post-trade margin checked"
+    stage: 6
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-030:
+    check_id: "CHK-030"
+    name: "Projected post-trade free margin checked"
+    stage: 6
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      min_projected_free_margin: "100.00"
+  CHK-031:
+    check_id: "CHK-031"
+    name: "Current leverage checked"
+    stage: 4
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      max_leverage: "30"
+  CHK-032:
+    check_id: "CHK-032"
+    name: "Projected leverage checked"
+    stage: 6
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      max_projected_leverage: "30"
+  CHK-033:
+    check_id: "CHK-033"
+    name: "Current gross exposure checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_gross_exposure: "10000.00"
+  CHK-034:
+    check_id: "CHK-034"
+    name: "Current net exposure checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_net_exposure: "10000.00"
+  CHK-035:
+    check_id: "CHK-035"
+    name: "Projected gross exposure checked"
+    stage: 6
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_gross_exposure: "10000.00"
+  CHK-036:
+    check_id: "CHK-036"
+    name: "Projected net exposure checked"
+    stage: 6
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_net_exposure: "10000.00"
+  CHK-037:
+    check_id: "CHK-037"
+    name: "Instrument exposure checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_instrument_exposure: "5000.00"
+  CHK-038:
+    check_id: "CHK-038"
+    name: "Position count checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_position_count: 5
+  CHK-039:
+    check_id: "CHK-039"
+    name: "Maximum position size checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_position_size: "1.00"
+  CHK-040:
+    check_id: "CHK-040"
+    name: "Maximum order size checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_order_size: "1.00"
+  CHK-041:
+    check_id: "CHK-041"
+    name: "Daily realised P&L checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-042:
+    check_id: "CHK-042"
+    name: "Daily unrealised P&L checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-043:
+    check_id: "CHK-043"
+    name: "Current account drawdown checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      drawdown_reference_basis: "illustrative-high-water-mark"
+  CHK-044:
+    check_id: "CHK-044"
+    name: "Daily loss limit checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      daily_loss_limit: "500.00"
+  CHK-045:
+    check_id: "CHK-045"
+    name: "Maximum drawdown limit checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_drawdown_limit: "0.10"
+  CHK-046:
+    check_id: "CHK-046"
+    name: "Consecutive loss count checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_consecutive_losses: 3
+  CHK-047:
+    check_id: "CHK-047"
+    name: "Trades-today count checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_trades_per_day: 10
+  CHK-048:
+    check_id: "CHK-048"
+    name: "Trading limit status checked"
+    stage: 4
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-049:
+    check_id: "CHK-049"
+    name: "Stop-loss present where required"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-050:
+    check_id: "CHK-050"
+    name: "Stop-loss distance valid"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-051:
+    check_id: "CHK-051"
+    name: "Take-profit valid where required"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-052:
+    check_id: "CHK-052"
+    name: "Order quantity valid"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-053:
+    check_id: "CHK-053"
+    name: "Minimum quantity checked"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-054:
+    check_id: "CHK-054"
+    name: "Maximum quantity checked"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-055:
+    check_id: "CHK-055"
+    name: "Quantity increment/step checked"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-056:
+    check_id: "CHK-056"
+    name: "Price increment/tick size checked"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-057:
+    check_id: "CHK-057"
+    name: "Contract specification current"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters:
+      max_contract_spec_age_ms: 86400000
+  CHK-058:
+    check_id: "CHK-058"
+    name: "Instrument tradable"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-059:
+    check_id: "CHK-059"
+    name: "Market open"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-060:
+    check_id: "CHK-060"
+    name: "No trading halt"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-061:
+    check_id: "CHK-061"
+    name: "No account restriction"
+    stage: 0
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-062:
+    check_id: "CHK-062"
+    name: "No margin call state"
+    stage: 0
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-063:
+    check_id: "CHK-063"
+    name: "No liquidation state"
+    stage: 0
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-064:
+    check_id: "CHK-064"
+    name: "No active risk lock"
+    stage: 0
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-065:
+    check_id: "CHK-065"
+    name: "No unresolved ledger exception"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-066:
+    check_id: "CHK-066"
+    name: "No unresolved broker exception"
+    stage: 1
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-067:
+    check_id: "CHK-067"
+    name: "Account currency checked"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-068:
+    check_id: "CHK-068"
+    name: "Instrument currency checked"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-069:
+    check_id: "CHK-069"
+    name: "FX conversion available where required"
+    stage: 3
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
+  CHK-070:
+    check_id: "CHK-070"
+    name: "Commission/fee assumptions available"
+    stage: 5
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-071:
+    check_id: "CHK-071"
+    name: "Estimated transaction cost checked"
+    stage: 5
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_estimated_transaction_cost: "5.00"
+  CHK-072:
+    check_id: "CHK-072"
+    name: "Estimated slippage checked"
+    stage: 5
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters:
+      max_estimated_slippage: "0.0010"
+  CHK-073:
+    check_id: "CHK-073"
+    name: "Final post-trade account state within configured limits"
+    stage: 6
+    status: BACKLOG
+    origin: PA-13
+    enabled: false
+    parameters: {}
+  CHK-074:
+    check_id: "CHK-074"
+    name: "Manual kill switch engaged"
+    stage: 0
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters: {}
+  CHK-075:
+    check_id: "CHK-075"
+    name: "Execution service health"
+    stage: 0
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters:
+      max_consecutive_internal_errors: 3
+  CHK-076:
+    check_id: "CHK-076"
+    name: "Broker connectivity"
+    stage: 0
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters:
+      connectivity_timeout_ms: 2000
+  CHK-077:
+    check_id: "CHK-077"
+    name: "Broker-state freshness"
+    stage: 0
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters:
+      max_broker_state_age_ms: 5000
+  CHK-078:
+    check_id: "CHK-078"
+    name: "Instrument-state freshness"
+    stage: 0
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters:
+      max_instrument_state_age_ms: 5000
+  CHK-079:
+    check_id: "CHK-079"
+    name: "Server-time offset validity"
+    stage: 0
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters:
+      max_clock_offset_ms: 1000
+  CHK-080:
+    check_id: "CHK-080"
+    name: "Symbol availability"
+    stage: 3
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters: {}
+  CHK-081:
+    check_id: "CHK-081"
+    name: "Supported execution/filling mode"
+    stage: 3
+    status: MVP
+    origin: WI-C-ADD
+    enabled: true
+    parameters:
+      required_execution_mode: "illustrative-fill-or-kill"
+  CHK-082:
+    check_id: "CHK-082"
+    name: "Spread/cost ceiling"
+    stage: 5
+    status: BACKLOG
+    origin: WI-C-ADD
+    enabled: false
+    parameters:
+      max_acceptable_spread: "0.0005"
