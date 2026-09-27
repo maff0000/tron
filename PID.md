@@ -1,140 +1,1096 @@
 # TRON — Project Initiation Document
 
-**Increment:** `WO-TRON-D1` — Design documentation baseline
-**PID author:** Matt (Human, product authority), drafted with Claude (claude.ai, TRADING - PLUTUS project)
-**PL-sponsor:** Rogue — acts on Matt's behalf: lands this PID, boots the PL, relays product-authority questions, reports
-**PL:** a Forge PL session booted from `/srv/forge` on dell-debian with `PROJECT_ROOT=/srv/tron`
+**Increment:** `WO-TRON-D1` — Authoritative Architecture & Contract Baseline  
+**Product Authority:** Matt  
+**Lead Architect:** ChatGPT  
+**Delivery:** Forge  
+**PL Sponsor:** Rogue  
+**Project Root:** `/srv/tron` on `dell-debian`  
+**Repository:** `maff0000/tron`  
 **Date:** 2026-09-27
 
-This PID follows Forge's `docs/PID-TEMPLATE.md`. Two fields are adapted
-rather than answered mechanically; §0 says why.
+---
 
-## 0. Why this PID is adapted, and what kind of increment this is
+# 0. Increment Intent
 
-This is a **documentation-only increment**. It produces TRON's design
-baseline — requirements, architecture, contracts, check catalogue,
-configuration model, capability backlog and decision register — so that the
-later implementation PIDs (starting with the MVP capabilities CAP-00 to
-CAP-06, §6.2) can be written against settled ground instead of re-deciding
-architecture inside an Engineer dispatch.
+TRON is entering its own product lifecycle.
 
-Adapted fields:
+This increment establishes the **authoritative architectural baseline for TRON** before runtime implementation begins.
 
-- **§5 Presentation Target.** TRON has no user-facing surface, in this
-  increment or later. No target applies. The Auditor's real-browser gate does
-  not fire. See §5.
-- **§12 Quality and Testing.** A documentation increment still gets
-  mechanical tests: the contracts and configuration model are delivered as
-  machine-checkable JSON Schemas with valid and invalid examples, and the
-  tests must be able to fail (§12).
+It is deliberately documentation-, contract-, schema- and test-focused.
 
-Nothing in this increment connects to a broker, to FALCON, to Redis or to
-Graylog.
+The objective is not to predict every future requirement. It is to settle enough architecture that subsequent implementation increments can build capabilities without repeatedly redesigning the execution engine.
 
-## 1. Identity
+This PID governs TRON only.
+
+Existing external systems are dependencies at defined boundaries. Their implementation history, internal design, previous work orders and outstanding operational work are not part of this increment.
+
+No external system is modified by `WO-TRON-D1`.
+
+---
+
+# 1. Identity and Working Environment
+
+## 1.1 Project
 
 ```text
-PROJECT_ROOT:
-
-/srv/tron   (on dell-debian)
-
-GitHub repository:
-
-maff0000/tron   (PRIVATE since 2026-09-27)
-
-Remote:
-
-git@github.com:maff0000/tron.git   (SSH via the repo-scoped deploy key)
+PROJECT_ROOT=/srv/tron
 ```
 
-**Stated by the Human, not yet verified by the PL.** The remote form above is
-inferred from the deploy-key setup HELM reported on 2026-09-26 (SSH remote
-plus `core.sshCommand`); it has not been driven by the author of this PID.
-The PL must verify all three fields against `git -C /srv/tron remote -v` and
-`git log` before relying on them, and correct this section (via the
-correction rule in Forge's `docs/FORGE-NORTH-STAR.md#durable-truth`) if they
-differ.
+Development host:
 
-**Host constraint (hard):** all work for this project runs on
-**dell-debian**. Trinity is the core agent server and AI platform and must
-not host TRON work. The PL boots from a Forge hub on dell-debian
-(`/srv/forge`). If no Forge hub exists on dell-debian, that is a
-product-authority gap: stop and report it; do not boot from trinity.
+```text
+dell-debian
+```
 
-## 2. Purpose
+Repository:
 
-TRON is the **deterministic trade-execution layer** of the trading stack. It
-reads potential trades posted by FALCON, applies configured rules to select
-and negotiate them into broker orders, runs ordered pre-trade checks against
-the broker's live state, executes through an MT5 gateway with a stop-loss and
-take-profit **always** set at the broker, verifies the protection is in
-place, and records every step as a structured event in Trading Graylog, where
-NEO observes it.
+```text
+maff0000/tron
+```
 
-TRON has **no intelligence**. Every decision it makes is either carried in the
-posted trade or written as a declarative rule in configuration. One TRON
-instance serves one broker. The broker's ledger is the source of truth.
+The Forge PL must verify the repository, remote, current branch and repository state before starting work.
 
-## 3. Target Outcome
+## 1.2 Repository visibility
 
-For this increment: a documentation set in `/srv/tron/docs/` (§6.1) that is:
+The TRON repository is intentionally **PUBLIC during the architecture/build phase** so that Central Architecture can inspect the project directly.
 
-1. **Complete** — every product decision in Appendix A is reflected, every
-   check in Appendix B is catalogued, every open decision in Appendix C is
-   recorded as open;
-2. **Consistent** — contracts, lifecycle, checks catalogue, configuration
-   model and capability list agree with each other;
-3. **Machine-checkable** where it defines data — schemas and examples
-   validate, and invalid examples are rejected;
-4. **Honest about evidence** — every claim about broker or gateway behaviour
-   is labelled MEASURED (with a source) or INFERRED (§12.3).
+Public visibility does not imply public write authority.
 
-"Done" for the Human: Matt can read the set, confirm or change the open
-decisions, and the next PID (MVP implementation) can be written by
-referencing these documents rather than restating them.
+Requirements:
 
-## 4. Readers (adapted from §4 Users)
+- unauthorised users must not have write or merge authority;
+- branch protection and repository permissions must preserve controlled integration;
+- secrets and credentials must never enter the repository;
+- account identifiers must never enter the repository;
+- sensitive broker or infrastructure details must never enter the repository;
+- configuration examples contain placeholders only;
+- production data must never enter the repository.
 
-- **Matt** — product authority; confirms open decisions.
-- **Rogue (PL-sponsor)**, the **Forge PL** session, and its **Engineer/Auditor** dispatches — this increment
-  and every later TRON PID.
-- **HELM / R2D2** — ops agents who build Graylog and the gateway instances
-  TRON depends on.
-- **FALCON builders** — consumers of the `falcon.trade_action` contract.
-- **NEO** — indirect reader: consumes the `tron.event` schema via Graylog.
+Repository visibility must be reconsidered before TRON is authorised for live production trading.
 
-## 5. Presentation Target
+## 1.3 Host boundary
 
-**None applies.** TRON is a headless service; this increment is documents and
-schemas. Declared explicitly so no Auditor applies, or skips, a
-browser-verification gate by assumption.
+All TRON development for this increment occurs on `dell-debian`.
 
-## 6. Scope
+Do not perform TRON development on Trinity.
 
-### 6.1 Deliverables
+Do not modify unrelated existing services, containers, networks, firewall rules or host configuration.
 
-All under `/srv/tron`:
+---
+
+# 2. Product Purpose
+
+TRON is the **deterministic trade-execution and execution-risk layer** of the trading platform.
+
+Its responsibility begins when potential trade actions become available from FALCON and ends when the resulting broker state and execution outcome have been verified and recorded.
+
+Conceptually:
+
+```text
+                         ┌─────────────────────┐
+                         │       FALCON        │
+                         │ potential actions   │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                              Redis board
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────┐
+│                           TRON                               │
+│                                                              │
+│  ingest → validate → select → negotiate → checks → execute   │
+│                                  │                 │         │
+│                                  │                 ▼         │
+│                                  │          verify broker    │
+│                                  │              state        │
+│                                  │                 │         │
+│                                  └─────────────────┘         │
+└───────────────────────┬──────────────────────┬───────────────┘
+                        │                      │
+                        ▼                      ▼
+                 Broker adapter         Local journal
+                        │                      │
+                        ▼                      ▼
+                     Broker              Trading Graylog
+                                               │
+                                               ▼
+                                              NEO
+                                         observer only
+```
+
+TRON is responsible for:
+
+- consuming candidate trade actions;
+- validating their contracts;
+- rejecting stale or duplicate actions;
+- applying deterministic eligibility and selection rules;
+- converting canonical trade intent into broker-valid order intent;
+- obtaining current broker/account/instrument state;
+- performing pre-trade checks;
+- enforcing configured execution and risk limits;
+- submitting permitted orders;
+- ensuring mandatory broker-side protection exists;
+- verifying resulting broker state;
+- reconciling its view against broker truth;
+- producing a durable structured audit trail.
+
+---
+
+# 3. What TRON Is Not
+
+TRON is **not**:
+
+- a strategy engine;
+- a signal generator;
+- a forecasting engine;
+- an AI decision-maker;
+- a market-data authority;
+- an independent trading ledger;
+- a portfolio research system;
+- a substitute for the broker ledger;
+- a place for discretionary judgement.
+
+TRON does not decide whether a market is attractive.
+
+TRON decides only whether a supplied action may be executed **under deterministic rules and current observable state**.
+
+---
+
+# 4. Core Architecture Doctrine
+
+## 4.1 Deterministic execution
+
+TRON has **no intelligence**.
+
+Every execution decision must be derivable from:
+
+1. the incoming trade action;
+2. current broker/account/instrument state;
+3. versioned configuration;
+4. deterministic code.
+
+Given equivalent inputs, state and configuration, TRON should reach the same decision.
+
+AI may observe TRON.
+
+AI does not participate in TRON's execution path.
+
+## 4.2 Broker truth
+
+The **broker ledger is authoritative** for:
+
+- balances;
+- equity;
+- open positions;
+- pending orders;
+- fills;
+- broker-recognised execution state.
+
+TRON may maintain local operational state and journals, but must never create an alternative authoritative trading ledger.
+
+Where local state conflicts with broker state, the discrepancy must be surfaced and broker state wins unless the broker response itself is unavailable or demonstrably invalid.
+
+## 4.3 One execution instance per broker/account context
+
+A TRON execution instance operates against one configured broker/account context.
+
+Multi-broker support comes from multiple independently configured instances, not broker-specific logic embedded into one monolithic runtime.
+
+## 4.4 External boundaries
+
+TRON communicates through explicit adapters.
+
+At minimum:
+
+```text
+FALCON / board
+      │
+      ▼
+Board Adapter
+      │
+      ▼
+TRON Core
+      │
+      ├── Broker Adapter ──► broker execution boundary
+      │
+      ├── Journal
+      │
+      └── Event Shipper ──► Trading Graylog
+```
+
+TRON business logic must not depend directly on transport-specific implementation details.
+
+The broker adapter exposes the broker capabilities and state TRON requires.
+
+The underlying execution transport is outside this PID.
+
+## 4.5 Configuration over hard-coding
+
+Operational policy belongs in validated configuration.
+
+Code implements behaviour.
+
+Configuration selects and parameterises behaviour.
+
+Configuration must not become an embedded programming language.
+
+A new parameter should normally require configuration/schema change.
+
+A genuinely new behaviour requires code.
+
+## 4.6 Incremental proof
+
+TRON is built vertically.
+
+Each capability must be proven before execution authority expands.
+
+The intended progression is:
+
+```text
+contracts
+   ↓
+read-only broker state
+   ↓
+board ingestion
+   ↓
+selection
+   ↓
+negotiation
+   ↓
+checks
+   ↓
+dry-run decision
+   ↓
+minimum-size paper execution
+   ↓
+protection verification
+   ↓
+reconciliation
+   ↓
+broader execution capabilities
+```
+
+No later stage is used to conceal an unproven earlier stage.
+
+---
+
+# 5. Hard Rules
+
+These rules are architectural invariants.
+
+| ID | Rule |
+|---|---|
+| HR-01 | Every OPEN trade must have both stop-loss and take-profit protection at the broker. Protection must be read back and verified. |
+| HR-02 | No operational configuration is hard-coded into TRON business logic. |
+| HR-03 | TRON contains no AI judgement or discretionary trading intelligence. |
+| HR-04 | Canonical timestamps are UTC epoch milliseconds. External time representations are normalised at their adapter boundary. |
+| HR-05 | Monetary values, prices and quantities use exact decimal representations; binary floating-point values must not cross canonical contracts. |
+| HR-06 | The broker ledger is authoritative trading truth. |
+| HR-07 | Redis is transport/messaging, not durable truth. |
+| HR-08 | No execution may proceed unless the intent and decision are durably journalled before broker submission. |
+| HR-09 | Upstream trade quantities are not expressed as broker lots. Broker-specific quantity conversion occurs at TRON's negotiation boundary. |
+| HR-10 | Secrets, credentials, account identifiers and sensitive infrastructure identifiers must not enter the repository or logs. |
+| HR-11 | TRON must not open a trade when the relevant instrument is not currently tradable. |
+| HR-12 | TRON-owned deployable infrastructure is containerised. TRON-owned container, image, volume and network names end in `-tron` and carry `proteus.project=tron`. |
+| HR-13 | Execution must be idempotent with respect to an incoming action identity. A retry must not silently become a second trade. |
+| HR-14 | A broker-state uncertainty that affects execution safety fails closed for new risk. |
+| HR-15 | Every material execution decision must be reconstructable from durable events, configuration identity and observed evidence. |
+| HR-16 | No external observer, including NEO, may directly instruct TRON to place a trade. |
+
+Changes to these hard rules require explicit Product Authority approval and a PID amendment.
+
+---
+
+# 6. System Boundaries
+
+## 6.1 FALCON
+
+FALCON supplies **potential trade actions**.
+
+The relationship is one-way:
+
+```text
+FALCON → board → TRON
+```
+
+TRON does not negotiate with FALCON.
+
+TRON does not request better trades.
+
+TRON does not send execution advice back to FALCON.
+
+If no valid actions are available, TRON does nothing.
+
+FALCON is not yet the execution authority; TRON remains responsible for execution eligibility and safety.
+
+## 6.2 NEO
+
+NEO is an observer.
+
+Conceptually:
+
+```text
+TRON → Trading Graylog → NEO
+```
+
+NEO may analyse:
+
+- executions;
+- rejected actions;
+- check results;
+- slippage;
+- broker discrepancies;
+- execution quality;
+- operational health.
+
+NEO cannot place, modify, cancel or approve trades through TRON.
+
+## 6.3 Broker boundary
+
+TRON reaches broker functionality through a **Broker Adapter**.
+
+TRON's core must not care how the adapter reaches the broker.
+
+The adapter contract must support the functionality required by TRON, including where applicable:
+
+- account state;
+- positions;
+- pending orders;
+- instrument metadata;
+- live tradability;
+- price/tick state;
+- margin information;
+- order validation;
+- order submission;
+- modification;
+- cancellation;
+- execution/deal history;
+- protection read-back.
+
+Broker-specific quirks belong behind this boundary or in broker-profile configuration, not throughout TRON core logic.
+
+---
+
+# 7. Canonical Trade Lifecycle
+
+The canonical OPEN lifecycle is:
+
+```text
+1. INGEST
+2. VALIDATE
+3. EXPIRE
+4. DEDUPLICATE
+5. DETERMINE ELIGIBILITY
+6. APPLY THRESHOLD
+7. RESOLVE CONFLICT
+8. RANK
+9. SELECT
+10. NEGOTIATE
+11. SNAPSHOT REQUIRED STATE
+12. RUN PRE-TRADE CHECKS
+13. JOURNAL EXECUTION INTENT
+14. EXECUTE
+15. READ BACK BROKER STATE
+16. VERIFY SL/TP PROTECTION
+17. RECONCILE
+18. RECORD OUTCOME
+```
+
+Failure before execution produces no new broker risk.
+
+Failure after broker submission enters an explicit recovery/reconciliation path.
+
+A failed protection verification is a **critical execution condition** and may never be silently accepted.
+
+---
+
+# 8. Order and Action State
+
+TRON uses market-standard/FIX-aligned terminology where useful without adopting the FIX wire protocol.
+
+Execution states include at minimum:
+
+```text
+New
+PartiallyFilled
+Filled
+Canceled
+Rejected
+Expired
+```
+
+TRON must distinguish between:
+
+- FALCON action state;
+- TRON intent state;
+- broker order state;
+- resulting position state.
+
+These must not be collapsed into one ambiguous `status` field.
+
+State transitions must be explicit and testable.
+
+---
+
+# 9. Contracts
+
+This increment defines the following canonical contracts:
+
+```text
+falcon.trade_action.v1
+tron.trade_intent.v1
+tron.execution_report.v1
+tron.check_report.v1
+tron.event.v1
+```
+
+All canonical contracts use JSON Schema draft 2020-12.
+
+## 9.1 Common contract rules
+
+- timestamps: UTC epoch milliseconds;
+- prices: decimal strings;
+- monetary amounts: decimal strings;
+- quantities: decimal strings;
+- currencies: ISO 4217 where applicable;
+- stable identifiers are explicit;
+- contract version is explicit;
+- unknown-field behaviour is explicitly defined;
+- optional does not mean semantically undefined.
+
+## 9.2 `falcon.trade_action.v1`
+
+Must support:
+
+```text
+action_id
+action
+instrument
+side
+stop_loss
+take_profit
+confidence
+valid_until_ms
+strategy reference
+signal reference
+supersedes reference
+position_action reference
+extensions
+```
+
+`action` initially supports:
+
+```text
+OPEN
+CLOSE
+MODIFY
+CANCEL
+```
+
+For `OPEN`:
+
+```text
+stop_loss  REQUIRED
+take_profit REQUIRED
+```
+
+Confidence must have a declared scale.
+
+Broker lot quantity is forbidden in the upstream action.
+
+## 9.3 `tron.trade_intent.v1`
+
+Represents the exact executable intent produced after negotiation.
+
+It records:
+
+- source action;
+- canonical instrument;
+- broker-resolved instrument;
+- direction;
+- canonical requested quantity;
+- negotiated broker quantity;
+- requested protection;
+- negotiated protection;
+- permitted adjustments;
+- rule responsible for each adjustment;
+- configuration identities;
+- timestamps;
+- correlation identifiers.
+
+## 9.4 `tron.execution_report.v1`
+
+Represents execution outcome using FIX-aligned semantics.
+
+It must support partial fills and multiple broker execution events without pretending every order is atomic.
+
+## 9.5 `tron.check_report.v1`
+
+Every check records:
+
+```text
+check_id
+stage
+result
+observed evidence
+configured parameters
+reason
+timestamp
+```
+
+A failed check must explain why it failed.
+
+## 9.6 `tron.event.v1`
+
+Provides the canonical event envelope used for operational/audit events.
+
+Every material event is correlated to the appropriate:
+
+```text
+action_id
+intent_id
+order identity
+execution identity
+```
+
+where those identities exist.
+
+---
+
+# 10. Configuration Model
+
+TRON configuration is separated by responsibility.
+
+Initial files:
+
+```text
+mapping.falcon.yaml
+routing.yaml
+selection.yaml
+sizing.yaml
+execution.yaml
+checks.yaml
+limits.yaml
+```
+
+Each has a corresponding JSON Schema.
+
+Startup behaviour is:
+
+```text
+load
+  ↓
+schema validate
+  ↓
+semantic validate
+  ↓
+cross-config validate
+  ↓
+hash
+  ↓
+start
+```
+
+Invalid configuration means **refuse startup**.
+
+TRON records the identity/hash of the configuration set responsible for every execution decision.
+
+Secrets are not configuration and must not be stored in these files.
+
+---
+
+# 11. Broker Profiles
+
+Broker and instrument differences are data, not reasons to fork TRON.
+
+Profiles may describe:
+
+- broker symbol mapping;
+- contract size;
+- quantity minimum;
+- quantity maximum;
+- quantity step;
+- tick size;
+- tick value;
+- stop-distance constraints;
+- freeze constraints;
+- supported order/filling modes;
+- margin semantics;
+- execution mode;
+- account mode;
+- trading sessions;
+- server-time characteristics;
+- commission/fee assumptions where known.
+
+Runtime broker state takes precedence over stale profile assumptions where the adapter exposes authoritative current values.
+
+Profiles must clearly distinguish:
+
+```text
+configured fact
+observed runtime fact
+derived value
+```
+
+Upstream systems do not need to know broker lot semantics.
+
+---
+
+# 12. Pre-Trade Check Architecture
+
+Checks are deterministic functions over a **consistent execution snapshot**.
+
+Checks are grouped into ordered stages.
+
+All checks in a stage execute.
+
+If any check in a stage fails, later stages do not execute and the proposed trade is blocked.
+
+Stages:
+
+| Stage | Purpose |
+|---|---|
+| 0 | operational safety and kill state |
+| 1 | ledger/reconciliation integrity |
+| 2 | idempotency and existing trade state |
+| 3 | instrument and order validity |
+| 4 | account and risk limits |
+| 5 | execution cost |
+| 6 | projected post-trade state |
+
+Every check has:
+
+```text
+check_id
+name
+stage
+required inputs
+configuration parameters
+PASS / FAIL / ERROR semantics
+failure reason
+MVP/backlog status
+```
+
+`ERROR` is not equivalent to `PASS`.
+
+Where an error creates execution uncertainty, TRON fails closed for new risk.
+
+---
+
+# 13. Canonical Check Catalogue
+
+The following Product Authority requirements must be preserved and individually mapped to stable check IDs:
+
+Ledger available · Ledger current · Last reconciliation successful · Account balance reconciled · Account equity reconciled · Open positions reconciled · Pending orders reconciled · Filled orders reconciled · Cancelled orders reconciled · Rejected orders reconciled · Partial fills reconciled · No orphan positions · No orphan orders · No duplicate orders · No duplicate fills · No unresolved execution discrepancies · No unresolved position discrepancies · No stale account state · No stale broker state · Proposed order not already submitted · Proposed order not already filled · Existing position state checked · Existing pending order state checked · Available cash checked · Available margin checked · Used margin checked · Free margin checked · Required margin checked · Projected post-trade margin checked · Projected post-trade free margin checked · Current leverage checked · Projected leverage checked · Current gross exposure checked · Current net exposure checked · Projected gross exposure checked · Projected net exposure checked · Instrument exposure checked · Position count checked · Maximum position size checked · Maximum order size checked · Daily realised P&L checked · Daily unrealised P&L checked · Current account drawdown checked · Daily loss limit checked · Maximum drawdown limit checked · Consecutive loss count checked · Trades-today count checked · Trading limit status checked · Stop-loss present where required · Stop-loss distance valid · Take-profit valid where required · Order quantity valid · Minimum quantity checked · Maximum quantity checked · Quantity increment/step checked · Price increment/tick size checked · Contract specification current · Instrument tradable · Market open · No trading halt · No account restriction · No margin call state · No liquidation state · No active risk lock · No unresolved ledger exception · No unresolved broker exception · Account currency checked · Instrument currency checked · FX conversion available where required · Commission/fee assumptions available · Estimated transaction cost checked · Estimated slippage checked · Final post-trade account state within configured limits.
+
+Under HR-01:
+
+```text
+Stop-loss present where required
+Take-profit valid where required
+```
+
+means **every OPEN trade**.
+
+Additional system-level checks may be proposed by the Architect/Engineer, but must be clearly identified as additions rather than silently attributed to Product Authority.
+
+At minimum the design must consider:
+
+- manual kill switch;
+- execution service health;
+- broker connectivity;
+- broker-state freshness;
+- instrument state freshness;
+- server-time offset validity;
+- symbol availability;
+- supported execution mode;
+- spread/cost ceiling.
+
+---
+
+# 14. Persistence and Durable Truth
+
+TRON has three distinct persistence concepts.
+
+## 14.1 Broker ledger
+
+Authoritative trading truth.
+
+## 14.2 Local journal
+
+TRON's durable operational record.
+
+At minimum it records:
+
+- consumed action identity;
+- decision;
+- negotiated intent;
+- check results;
+- broker submission attempt;
+- broker response;
+- protection verification;
+- reconciliation outcome;
+- events awaiting shipment.
+
+The journal is append-oriented.
+
+It exists to support:
+
+- idempotency;
+- crash recovery;
+- auditability;
+- event delivery;
+- reconciliation.
+
+It does **not** supersede broker truth.
+
+## 14.3 Trading Graylog
+
+Graylog is the operational audit and analysis record.
+
+TRON uses a **journal/spool then ship** model.
+
+A Graylog outage must not cause execution history to disappear.
+
+A Graylog outage alone does not necessarily stop trading if the durable local journal remains healthy.
+
+No execution may occur when the required local durable journal write cannot be made.
+
+---
+
+# 15. Events and Observability
+
+TRON emits structured events for material lifecycle transitions.
+
+At minimum:
+
+```text
+action.received
+action.rejected
+action.expired
+action.duplicate
+action.selected
+intent.created
+check.stage.completed
+check.failed
+execution.submitted
+execution.accepted
+execution.rejected
+execution.partial_fill
+execution.filled
+protection.verified
+protection.failed
+reconciliation.completed
+reconciliation.failed
+trade.completed
+system.degraded
+system.halted
+```
+
+Events must be machine-readable.
+
+Correlation must allow reconstruction of an action from ingestion through execution and reconciliation.
+
+Never log:
+
+- passwords;
+- API credentials;
+- secret material;
+- account login identifiers;
+- sensitive infrastructure identifiers.
+
+---
+
+# 16. Capabilities
+
+TRON is implemented as bounded deterministic capabilities.
+
+The initial capability sequence is:
+
+| ID | Capability |
+|---|---|
+| CAP-00 | Foundation |
+| CAP-01 | Board ingestion |
+| CAP-02 | Selection |
+| CAP-03 | Negotiation |
+| CAP-04 | MVP pre-trade checks |
+| CAP-05 | Protected OPEN execution |
+| CAP-06 | Protection verification |
+
+## CAP-00 — Foundation
+
+Establishes:
+
+- configuration loading;
+- schema validation;
+- broker-adapter read path;
+- symbol mapping;
+- canonical time handling;
+- durable journal;
+- event creation;
+- event shipping;
+- health state.
+
+## CAP-01 — Board ingestion
+
+Consumes candidate actions without executing them.
+
+Proves:
+
+```text
+board → contract validation → durable ingestion
+```
+
+## CAP-02 — Selection
+
+Applies configured eligibility, confidence and ranking policy.
+
+No broker execution.
+
+## CAP-03 — Negotiation
+
+Transforms a canonical candidate into broker-valid executable intent.
+
+This is where broker-specific quantity semantics are resolved.
+
+No broker execution.
+
+## CAP-04 — MVP pre-trade checks
+
+Runs the minimum approved check set over a consistent snapshot.
+
+Initial mode is dry-run.
+
+## CAP-05 — Protected OPEN execution
+
+Introduces broker-side execution at minimum paper size.
+
+No OPEN is considered successful until mandatory protection requirements are satisfied.
+
+## CAP-06 — Protection verification
+
+Reads resulting broker state and proves SL/TP protection exists as intended.
+
+A failure enters explicit recovery/reconciliation handling.
+
+---
+
+# 17. Capability Backlog
+
+D1 must produce a capability backlog covering at least:
+
+### Lifecycle
+
+- CLOSE
+- MODIFY
+- CANCEL
+- expiry handling
+- supersession
+- conflict handling
+
+### Ledger and reconciliation
+
+- periodic reconciliation
+- orphan detection
+- discrepancy classification
+- crash recovery
+- restart reconciliation
+
+### Risk
+
+- account exposure limits
+- instrument exposure limits
+- drawdown limits
+- daily loss limits
+- position limits
+- order limits
+- consecutive-loss policy
+- active risk lock
+
+### Execution robustness
+
+- partial fills
+- execution retries
+- ambiguous broker response recovery
+- protection repair
+- slippage handling
+- rejection classification
+
+### Operations
+
+- kill switch
+- degraded-state handling
+- health reporting
+- configuration change detection
+- journal replay
+- event replay
+- operational alerts
+
+Each capability receives a stable ID and status:
+
+```text
+BACKLOG
+IN-PID
+DONE
+```
+
+---
+
+# 18. Initial Test Strategy
+
+The first controlled execution path uses a deliberately simple external test strategy producing frequent BTCUSD candidate actions.
+
+BTCUSD is selected first because it generally offers broad trading availability, including weekend availability on suitable broker offerings.
+
+TRON must **not** assume BTCUSD is permanently tradable.
+
+HR-11 remains authoritative:
+
+```text
+instrument not currently tradable
+        ↓
+no new OPEN
+```
+
+After the complete path is proven with BTCUSD:
+
+```text
+BTCUSD
+   ↓
+XAUUSD
+   ↓
+additional instruments
+```
+
+The purpose of the test strategy is deterministic input generation, not profitability.
+
+---
+
+# 19. Open Product Decisions
+
+The following remain OPEN and must not be silently decided by an Engineer.
+
+## DEC-OPEN-01 — conflicting candidate actions
+
+When qualifying LONG and SHORT actions exist for the same instrument.
+
+Proposed initial policy:
+
+```text
+skip the instrument for that selection cycle
+```
+
+## DEC-OPEN-02 — existing-position policy
+
+Whether TRON may add to an existing position.
+
+Proposed MVP:
+
+```text
+one position per instrument
+```
+
+## DEC-OPEN-03 — response to hard-limit breach
+
+Whether an existing position is automatically exited when a hard account limit is breached.
+
+Proposed MVP:
+
+```text
+block new risk;
+existing positions remain protected by their broker-side SL/TP
+```
+
+## DEC-OPEN-04 — quantity ownership
+
+Whether canonical quantity originates upstream or is determined by TRON sizing policy.
+
+Proposed MVP:
+
+```text
+fixed canonical base quantity from TRON configuration
+```
+
+## DEC-OPEN-05 — board transport
+
+Initial polling versus a stream/consumer model.
+
+A one-minute polling cycle is acceptable for initial proving but is **not an immutable architectural requirement**.
+
+## DEC-OPEN-06 — routing
+
+Whether upstream actions identify a broker/account destination.
+
+Proposed:
+
+```text
+actions remain broker-neutral;
+TRON instance configuration determines its eligible actions
+```
+
+## DEC-OPEN-07 — production Graylog placement
+
+To be determined during production architecture.
+
+## DEC-OPEN-08 — confidence calibration
+
+FALCON must eventually ensure confidence values are semantically comparable enough for any TRON rule that compares candidates from different strategies.
+
+Exact calibration contract remains open.
+
+## DEC-OPEN-09 — reconciliation cadence
+
+DECIDED:
+
+```text
+broker ledger = authoritative truth
+```
+
+OPEN:
+
+```text
+background reconciliation cadence
+```
+
+Potential design:
+
+```text
+live read before execution
++ immediate post-execution reconciliation
++ periodic full sweep
+```
+
+No fixed periodic interval is decided by D1.
+
+## DEC-OPEN-10 — runtime implementation language/version
+
+Not decided by this documentation increment.
+
+---
+
+# 20. D1 Deliverables
+
+`WO-TRON-D1` produces:
 
 ```text
 docs/
-├── README.md                    index of the set, reading order
-├── 01-CONTEXT.md                system context, trust boundaries, what TRON is not
-├── 02-REQUIREMENTS.md           functional + non-functional requirements (REQ-nnn)
-│                                and hard rules (HR-nn, §6.3), each traceable
-├── 03-ARCHITECTURE.md           components, capability model, planned code layout,
-│                                per-cycle data flow, instance/deployment layout
-├── 04-TRADE-LIFECYCLE.md        pipeline steps and FIX-aligned state machines
-├── 05-CONTRACTS.md              contract definitions, versioning and evolution rules
-├── 06-CHECKS-CATALOGUE.md       every check: ID, stage, data source, params, MVP/backlog
-├── 07-CONFIGURATION.md          config file set, validation-at-startup, config hashing
-├── 08-BROKER-PROFILES.md        what varies per broker, capture method, time offset,
-│                                symbol mapping
-├── 09-EVENTS-AND-GRAYLOG.md     event types, GELF mapping, spool-then-ship
-├── 10-CAPABILITIES.md           MVP CAP-00..06 + backlog, with a status column
-├── 11-DECISIONS.md              decision register: DECIDED vs OPEN (Appendix A, C)
-├── 12-SECURITY.md               secrets, least privilege, inherited risk acceptances
+├── README.md
+├── 01-CONTEXT.md
+├── 02-REQUIREMENTS.md
+├── 03-ARCHITECTURE.md
+├── 04-TRADE-LIFECYCLE.md
+├── 05-CONTRACTS.md
+├── 06-CHECKS-CATALOGUE.md
+├── 07-CONFIGURATION.md
+├── 08-BROKER-PROFILES.md
+├── 09-EVENTS-AND-GRAYLOG.md
+├── 10-CAPABILITIES.md
+├── 11-DECISIONS.md
+├── 12-SECURITY.md
 └── evidence/
-    └── WO-TRON-D1.md            PL's evidence file for this increment
+    └── WO-TRON-D1.md
 
 schemas/
 ├── falcon.trade_action.v1.json
@@ -151,10 +1107,10 @@ schemas/
 │   ├── checks.schema.json
 │   └── limits.schema.json
 └── examples/
-    ├── valid/                   ≥1 per contract schema
-    └── invalid/                 the negative cases required by §12.1
+    ├── valid/
+    └── invalid/
 
-config.example/                  one file per config schema, placeholders only
+config.example/
 ├── mapping.falcon.yaml
 ├── routing.yaml
 ├── selection.yaml
@@ -164,558 +1120,468 @@ config.example/                  one file per config schema, placeholders only
 └── limits.yaml
 
 tests/
-└── test_docs_baseline.py        the §12.1 mechanical tests
+└── test_docs_baseline.py
 
-requirements-dev.txt             test-only dependencies (pinned)
+requirements-dev.txt
 ```
-
-### 6.2 Required content, by document
-
-**01-CONTEXT.** The flow, as decided (Appendix A):
-
-```text
-FALCON ──posts──► Redis board ──pulled by──► TRON ──► mt5-gateway ──► broker
-                                               │
-                                               └──► local journal ──► Trading Graylog ──► NEO (observer only)
-```
-
-It also states: one TRON per broker; FALCON down means no trading; NEO never
-sends anything; what TRON is not (not a strategy engine, not a ledger of
-record, not an AI agent).
-
-**02-REQUIREMENTS.** Functional and non-functional requirements with IDs,
-plus the hard rules in §6.3. Every requirement cites the Appendix A decision
-it comes from, or is marked as proposed by the design partner.
-
-**03-ARCHITECTURE.**
-
-- The capability model: deterministic handlers, one per lifecycle step,
-  enabled in config, each with its own tests and events.
-- The planned code layout.
-- The instance layout on the host, mirroring mt5-gateway:
-  `/srv/tron-instances/<component>-<broker>-<env>-tron/{instance.env, config/, secrets/}`.
-- A **Docker naming table** (HR-12) listing every container, image, volume
-  and network this project will create, for example:
-  - `executor-vantage-paper-tron` (one TRON executor per broker and
-    environment);
-  - `graylog-tron`, `opensearch-tron`, `mongodb-tron` (Trading Graylog
-    stack);
-  - `teststrategy-btc-tron` (the fixed BTCUSD test strategy);
-  - `board-redis-tron` (the test board, if one is needed before FALCON
-    exists).
-
-  The component names are proposals; the `-tron` suffix is not.
-- How TRON reaches a gateway: through its compose-scoped network, over the
-  existing bridge. The bridge is unauthenticated RPyC classic; that must be
-  stated, with a reference to 12-SECURITY.
-- Where durable state lives (§10).
-
-**04-TRADE-LIFECYCLE.**
-
-- The per-cycle pipeline: pull → validate → expire → dedupe → eligibility →
-  threshold → conflict → rank → select → negotiate → checks → execute →
-  verify protection → record.
-- Action lifecycle states.
-- An order state machine aligned to FIX OrdStatus: New, PartiallyFilled,
-  Filled, Canceled, Rejected, Expired.
-- The TP/SL protection sequence, including the two-step fallback: open, then
-  attach SL/TP, then close at once if attaching fails. It must be marked
-  INFERRED as to whether any given broker needs it.
-
-**05-CONTRACTS + schemas/.**
-
-- `falcon.trade_action` v1:
-  - `action` ∈ {OPEN, CLOSE, MODIFY, CANCEL};
-  - canonical instrument;
-  - `stop_loss` and `take_profit` REQUIRED on OPEN;
-  - `confidence` with a declared scale;
-  - `valid_until_ms`;
-  - `refs` (`signal_id`, `supersedes`, `position_action_id`);
-  - `extensions`.
-- `tron.trade_intent` v1, including the `negotiation` block (config versions
-  and an adjustments list naming the permitting rule).
-- `tron.execution_report` v1 (FIX ExecutionReport semantics).
-- `tron.check_report` v1: per check, its ID, stage, result, the evidence
-  values it used and its config parameters.
-- `tron.event` v1: the envelope that maps onto GELF.
-
-Rules for all contracts: decimals as strings, timestamps as epoch UTC in
-milliseconds, ISO 4217 currencies, JSON Schema draft 2020-12, and an explicit
-policy for unknown fields.
-
-**06-CHECKS-CATALOGUE.** Every item in Appendix B, verbatim name preserved,
-plus the additions proposed in design:
-
-- algo trading enabled in the terminal
-- server-time offset known and fresh
-- manual kill switch
-- symbol selected in Market Watch
-- filling mode supported
-- tick fresh
-- spread below maximum
-
-Each check gets:
-
-- a stable ID
-- a stage (0–6, see below)
-- the MT5 data it reads (named fields, e.g. `account_info().margin_level`)
-- its parameters (which must exist in `checks.yaml`)
-- its failure semantics
-- MVP or backlog
-
-Where an Appendix B item does not map cleanly onto MT5 (for example,
-rejected orders not appearing in broker history), the document says so and
-states the adapted form. It must not silently drop the item.
-
-The stages are:
-
-| Stage | Covers |
-|---|---|
-| 0 | kill switches and health |
-| 1 | ledger integrity |
-| 2 | idempotency and existing state |
-| 3 | instrument and order validity |
-| 4 | account and risk limits |
-| 5 | cost |
-| 6 | final post-trade projection |
-
-Rule: all checks in a stage are evaluated; the first failing stage stops the
-trade. Checks are pure functions over one consistent snapshot.
-
-**07-CONFIGURATION.**
-
-- The seven config files: their purpose and schemas.
-- The "no config in code, ever" rule.
-- Validate-or-refuse at startup.
-- The hash of every config file in force is recorded in every intent and
-  event.
-- Honest limit: new *behaviour* needs code; new carried fields need only
-  schema and mapping.
-
-**08-BROKER-PROFILES.** What varies per broker and symbol:
-
-- symbol names
-- contract size and lot meaning
-- volume min, step and max
-- tick size and value
-- stops and freeze level
-- filling and execution modes
-- margin mode
-- swap
-- sessions
-- server timezone
-- hedging versus netting
-
-It must also state the rule that **quantity is never specified in lots
-upstream**, and describe the time-offset measurement method: a live tick
-compared against true UTC, rounded to 30 minutes, using a 24/7 symbol as
-the weekend reference, and re-measured so daylight-saving changes are
-caught.
-
-**09-EVENTS-AND-GRAYLOG.**
-
-- The event types.
-- The GELF field mapping: key fields top-level, full payload as JSON.
-- Correlation by intent ID.
-- Spool-then-ship: no trade without a local journal write; a Graylog outage
-  does not block trading and loses nothing.
-- Never log secrets or account identifiers.
-- Graylog is the audit and analysis record, not the ledger.
-- Graylog's prod placement is OPEN (Appendix C).
-
-**10-CAPABILITIES.** The MVP set, with status:
-
-| ID | Capability |
-|---|---|
-| CAP-00 | foundation: config, adapter-read, symbol map, time offset, journal and shipper |
-| CAP-01 | board reader |
-| CAP-02 | selection |
-| CAP-03 | negotiation |
-| CAP-04 | MVP pre-trade checks |
-| CAP-05 | open market with protection |
-| CAP-06 | protection verification |
-
-Plus the full backlog, grouped as lifecycle, ledger/reconciliation, risk,
-execution robustness and operations. Each backlog item gets an ID and a
-status (BACKLOG / IN-PID / DONE).
-
-**11-DECISIONS.** Every Appendix A item as DECIDED, with its source. Every
-Appendix C item as OPEN, with the options and the design partner's proposed
-default, clearly labelled as a proposal. No OPEN item may be presented
-anywhere in the set as if decided.
-
-**12-SECURITY.**
-
-- Secrets: host-only, Docker secrets, never environment variables or the
-  repo.
-- A read-only Redis ACL user for the FALCON board.
-- Least privilege throughout.
-- The risk acceptances inherited from mt5-gateway, restated with their
-  revisit triggers:
-  - root on dell-debian (paper only);
-  - the broad gh token (extended until live credentials are used);
-  - the unauthenticated bridge (must be resolved before prod);
-  - KasmVNC Basic Auth over HTTP (dev only).
-- A note on prop-firm rule compliance.
-
-### 6.3 Hard rules the documents must state consistently
-
-| ID | Rule |
-|---|---|
-| HR-01 | Every OPEN carries a stop-loss AND a take-profit, set at the broker and read back. No exceptions. |
-| HR-02 | No configuration in code, ever. |
-| HR-03 | TRON has no intelligence: rules come from config; judgement comes from the posted trade. |
-| HR-04 | Timestamps are epoch UTC in milliseconds; broker server time is converted at the adapter boundary. |
-| HR-05 | Prices and quantities are decimal strings, never floats. |
-| HR-06 | The broker ledger is the source of truth. TRON mirrors it and never maintains an independent ledger. |
-| HR-07 | Redis is messaging only. Nothing durable lives in Redis. |
-| HR-08 | No trade without a durable local journal write. |
-| HR-09 | Quantities are never expressed in lots upstream of TRON's negotiation step. |
-| HR-10 | No secrets, account login numbers or broker/host IPs in the repository. |
-| HR-11 | Market closed for an instrument means no trading on that instrument. |
-| HR-12 | Everything this project builds is Docker-container based. Every container, image, volume and network it creates is named with the suffix `-tron`, and carries the Docker label `proteus.project=tron`. Volumes and networks get explicit `name:` values in compose, so Compose's default `<project>_<name>` form cannot break the suffix. The mt5-gateway containers (`mt5-<broker>-<env>`) belong to the mt5-gateway project and are not renamed. |
-
-## 7. Non-Goals
-
-- **No TRON implementation code.** The only code permitted is
-  `tests/test_docs_baseline.py`.
-- No Graylog installation, no Redis setup, no FALCON work, no broker
-  connection.
-- **No changes to mt5-gateway, any gateway instance, or any existing system**
-  on trinity or dell-debian. No host, firewall or Docker network changes.
-- **No decision on any Appendix C item.** Record it; do not decide it.
-- No choice of a Python version, framework or library for the future runtime
-  beyond what §8 fixes. Where the docs need one, mark it OPEN.
-- Do not rewrite existing git history (see §8, "Repository lineage").
-
-## 8. Architecture
-
-Existing structure the work must fit:
-
-- The repo has a gitleaks baseline: `.gitignore`, `.gitleaks.toml`, and
-  `scripts/hooks/pre-commit` (via `core.hooksPath`). Keep it active; never
-  bypass it with `--no-verify`.
-- **Vocabulary is FIX-aligned.** NewOrderSingle maps to TradeIntent, and
-  ExecutionReport keeps its name. Order states follow FIX OrdStatus. The FIX
-  wire protocol is **not** adopted.
-- Data is defined as JSON Schema draft 2020-12. Configuration is YAML,
-  validated against JSON Schemas.
-- The gateway interface is the existing mt5-gateway bridge: the MetaTrader5
-  Python API surface over RPyC. Its measured behaviour is in Appendix D.
-- The tests use Python with `pytest` and `jsonschema`, pinned in
-  `requirements-dev.txt`. This is test tooling only, not a decision about
-  TRON's runtime.
-
-**Repository lineage.** The first commits on `main` come from the shared
-mt5-gateway/tron safety baseline (`WO-MT5GW-0001`/`0002`: `.gitignore`,
-`.gitleaks.toml`, the pre-commit hook). This is intentional and stays:
-
-- Those commits are already cited by SHA in mt5-gateway's audit trail, and
-  Forge doctrine forbids rewriting a commit something else points at
-  (`docs/FORGE-NORTH-STAR.md#durable-truth`).
-- The pending gitleaks branch was fast-forward merged into `main` on
-  2026-09-27, before this PID landed.
-- From this PID onward, TRON work uses its own numbering: `WO-TRON-*`.
-- `docs/README.md` states this lineage in one paragraph, so a reader of the
-  first commit is not misled.
-
-May change only with a PID update: the hard rules (§6.3), the contract field
-semantics listed in §6.2, and the document set in §6.1.
-
-## 9. Repository Security
-
-The repository is **private**. The rules below hold regardless of
-visibility:
-
-- Never commit secrets, account login numbers, account names, broker server
-  names tied to an account, broker server IPs, or host IPs other than private
-  addresses already used in documentation.
-- Every configuration example uses placeholders only.
-- The gitleaks pre-commit hook must be active. The PL verifies
-  `core.hooksPath` before the first commit.
-- An Auditor grep for identifiers is part of acceptance (§13).
-
-## 10. Persistence and Durable Truth
-
-For this increment: **git only**. The documents, schemas and tests are the
-durable output.
-
-For TRON as designed (to be documented in 03 and 09):
-
-- The broker ledger is the source of truth.
-- Redis carries the FALCON board. It is **messaging only**, per Forge's hard
-  constraint; nothing durable lives there.
-- TRON's durable state (processed action IDs, the intent and event journal)
-  lives in a local append-only journal on the instance's persistent volume.
-- Graylog is the audit and analysis record, never the ledger.
-
-## 11. Git and GitHub
-
-- **The Forge PL alone commits, branches and manages the PR** for the
-  increment's work. The one exception is landing this PID on `main`, which
-  Rogue does as PL-sponsor before the PL boots, since the startup gate
-  requires it. Engineers
-  never commit. This restates Forge doctrine.
-- Branch: `wo/WO-TRON-D1-docs-baseline`. Commit prefix: `[WO-TRON-D1]`. One
-  PR to `main`.
-- Push uses the repo's deploy key. The `gh` token is used for PR operations
-  on `maff0000/tron` only, per the recorded risk acceptance: never for
-  settings, admin, other repositories or deletes.
-- Merge happens after the Auditor's GREEN and **Matt's final acceptance**.
-- The Auditor's dispatch prompt is preserved verbatim in
-  `docs/evidence/WO-TRON-D1.md` beside the verdict, per Forge `SKILL.md` §8.
-
-## 12. Quality and Testing
-
-### 12.1 Mechanical tests (`tests/test_docs_baseline.py`)
-
-- **T1** — every schema in `schemas/` is a valid draft 2020-12 schema.
-- **T2** — every file in `schemas/examples/valid/` validates against its
-  schema.
-- **T3** — every file in `schemas/examples/invalid/` **fails** validation,
-  and fails for its intended reason: the test asserts the failing keyword or
-  path, not just "invalid". Required negative cases, at minimum:
-  - an OPEN action missing `stop_loss`;
-  - an OPEN action missing `take_profit`;
-  - a price given as a JSON number instead of a string;
-  - an unknown `action` value;
-  - `confidence` outside its declared scale;
-  - a `falcon.trade_action` carrying a lot quantity (HR-09).
-- **T4** — every file in `config.example/` validates against its config
-  schema. At least one invalid config example per schema is rejected for its
-  intended reason.
-- **T5** — cross-references:
-  - every check ID in `06-CHECKS-CATALOGUE.md` exists in `checks.schema.json`
-    and in `config.example/checks.yaml`, and the reverse;
-  - every CAP ID used anywhere in `docs/` is defined in
-    `10-CAPABILITIES.md`;
-  - every Appendix B item appears in 06 by its verbatim name.
-- **T6** — `gitleaks` is clean over the working tree and the branch
-  history.
-- **T7** — every relative link in `docs/` resolves.
-- **T8** — every name in the 03-ARCHITECTURE Docker naming table ends in
-  `-tron`. The test must fail if a non-conforming name is added: demonstrate
-  this under §12.2.
-
-### 12.2 Non-vacuity (Forge `docs/EVIDENCE-DOCTRINE.md`)
-
-The tests must be able to fail:
-
-- **T3 and T4 are the load-bearing proof** that the contract layer enforces
-  HR-01 and HR-09. A T3 that passes because an invalid example is
-  malformed for some *other* reason is vacuous. That is why the failing
-  keyword or path is asserted.
-- The Engineer demonstrates non-vacuity (Forge engineer rule 14) and records
-  it in the evidence file:
-  1. Temporarily relax a required field and show T3 then fails.
-  2. Temporarily delete one Appendix B item from 06 and show T5 fails.
-  3. Temporarily add a name without the `-tron` suffix to the naming table
-     and show T8 fails.
-  4. Revert all three.
-
-### 12.3 Measured versus inferred
-
-**Every claim in the documents about broker, gateway or MT5 behaviour is
-labelled** either:
-
-- **MEASURED**, with its source (a repo evidence file, or a dated HELM report
-  named in Appendix D); or
-- **INFERRED**, with its basis.
-
-**No broker-behaviour claim can be proven in this increment.** The
-load-bearing gate for those claims is the **live paper broker**, in the
-future implementation PIDs, not any test here. The documents must say so
-wherever such a claim appears. Examples of claims that must stay INFERRED
-until driven:
-
-- whether SL/TP can be attached to a market order on a given broker;
-- partial-fill behaviour;
-- commission reporting.
-
-The Auditor checks this labelling (§13).
-
-## 13. Acceptance Definition
-
-GREEN requires all of:
-
-1. Every §6.1 deliverable exists.
-2. T1–T8 pass on the PL-integrated commit.
-3. Non-vacuity is demonstrated and recorded (§12.2).
-4. The Auditor independently confirms:
-   - **Coverage:** every Appendix A decision appears in 11-DECISIONS as
-     DECIDED; every Appendix B check appears in 06; every Appendix C item
-     appears as OPEN and is nowhere presented as decided.
-   - **Consistency:** the contracts, lifecycle, checks catalogue,
-     configuration schemas and capability list agree. For example, every
-     field a check reads exists in a contract or in the named MT5 data
-     source.
-   - **Hard rules:** HR-01 to HR-12 are stated identically wherever they
-     appear, and nothing in the set contradicts them.
-   - **Evidence labelling:** MEASURED/INFERRED labelling per §12.3, with a
-     sample of MEASURED claims traced to their cited source.
-   - **Security:** there are no identifiers or secrets (manual grep, with
-     counts reported), and `config.example/` holds placeholders only.
-   - **Naming (HR-12):** every container, image, volume and network name in
-     the documents ends in `-tron`. The Auditor greps for the names used and
-     reports any that break the rule.
-5. The Auditor's prompt is preserved verbatim beside the verdict in
-   `docs/evidence/WO-TRON-D1.md`.
-6. **Matt's final acceptance** of the documentation set.
-
-Presentation target: none (§5). No browser gate.
-
-## 14. Development Inputs
-
-Read before starting:
-
-- This PID, including Appendices A–D.
-- Forge: `docs/PID-TEMPLATE.md`, `docs/EVIDENCE-DOCTRINE.md`,
-  `docs/FORGE-NORTH-STAR.md`, `.claude/skills/forge/SKILL.md`, and both
-  agent files.
-- **mt5-gateway** repository (read-only; do not modify):
-  - `docs/DESIGN.md`
-  - `docs/evidence/WO-MT5GW-0002.md` to the latest
-  - `deploy/compose.instance.yml`
-  - `bridge/rpyc_server.py`
-  - `start.sh`
-  - `docs/broker-profiles/vantage.json`, *if it exists* (it was requested of
-    HELM, not confirmed delivered). If absent, every broker-profile value in
-    08 is INFERRED or OPEN.
-- tron repository: the existing baseline files on `main`.
 
 ---
 
-## Appendix A — Product decisions (DECIDED, stated by Matt)
+# 21. D1 Non-Goals
 
-1. **NEO only observes**, via Trading Graylog. NEO never sends trades.
-2. **FALCON is a one-way message board.** It posts potential trades to
-   Redis. There is no two-way interaction between TRON and FALCON. If FALCON
-   is down or has posted nothing, TRON does not trade.
-3. **TRON pulls the board every 1 minute.** Accepted provisionally; the pull
-   mechanism is to be revisited (Appendix C, item 5).
-4. **TRON has no intelligence.** A posted trade must carry everything TRON
-   needs to act. Selection is by configured rules. Example: BTCUSD requires
-   confidence ≥ 90; of several qualifying posts, TRON actions the highest
-   confidence.
-5. **A take-profit and a stop-loss are ALWAYS set.**
-6. **No configuration in code, ever.** Contracts are adjustable by adding or
-   removing variables through config and schema.
-7. **Lifecycle handlers are called "capabilities."** Matt delegated the choice
-   of term; "skill" was rejected because it implies agent judgement.
-8. **Start with only the capabilities needed to set a trade with TP/SL.**
-   Keep a backlog of every capability needed for robustness and
-   predictability.
-9. **BTCUSD first** (the market is always open), **then XAUUSD.**
-10. **The input is controlled** by a fixed, simple BTCUSD test strategy that
-    triggers often. It is external to TRON and posts in FALCON's format.
-11. **Trading Graylog records every trade set and completion** in JSON; NEO
-    reads it; HELM builds Graylog.
-12. **The broker ledger is the source of truth.** TRON reflects it rather
-    than keeping its own ledger history (Matt, 2026-09-26: "a 5 min ledger
-    refresh from broker"). The refresh design is in Appendix C, item 9.
-13. **One TRON per broker.** Brokers: Vantage and Oanda, paper accounts.
-14. **Timestamps are epoch UTC.**
-15. **TRON is market-timing aware.** A closed market means no trading on that
-    instrument.
-16. **Market standards are used where possible.**
-17. **Build step by step**; each step is proven before the next.
-18. **FALCON is pre-MVP**, so the FALCON board contract is TRON's to define.
-19. **Everything is built as Docker containers**, and everything this project
-    builds is labelled `*-tron` so it is identifiable as belonging to TRON
-    (Matt, 2026-09-27). Encoded as HR-12.
+This increment does **not**:
 
-## Appendix B — Pre-trade checks specified by Matt (verbatim)
+- implement the TRON runtime;
+- submit broker orders;
+- connect to live or paper accounts;
+- install Redis;
+- install Graylog;
+- implement FALCON;
+- implement NEO;
+- implement the BTCUSD test strategy;
+- make infrastructure changes;
+- modify unrelated systems;
+- resolve OPEN product decisions without Product Authority;
+- choose production infrastructure;
+- choose the production runtime language;
+- implement CAP-00 through CAP-06.
 
-Ledger available · Ledger current · Last reconciliation successful · Account
-balance reconciled · Account equity reconciled · Open positions reconciled ·
-Pending orders reconciled · Filled orders reconciled · Cancelled orders
-reconciled · Rejected orders reconciled · Partial fills reconciled · No orphan
-positions · No orphan orders · No duplicate orders · No duplicate fills · No
-unresolved execution discrepancies · No unresolved position discrepancies ·
-No stale account state · No stale broker state · Proposed order not already
-submitted · Proposed order not already filled · Existing position state
-checked · Existing pending order state checked · Available cash checked ·
-Available margin checked · Used margin checked · Free margin checked ·
-Required margin checked · Projected post-trade margin checked · Projected
-post-trade free margin checked · Current leverage checked · Projected
-leverage checked · Current gross exposure checked · Current net exposure
-checked · Projected gross exposure checked · Projected net exposure checked ·
-Instrument exposure checked · Position count checked · Maximum position size
-checked · Maximum order size checked · Daily realised P&L checked · Daily
-unrealised P&L checked · Current account drawdown checked · Daily loss limit
-checked · Maximum drawdown limit checked · Consecutive loss count checked ·
-Trades-today count checked · Trading limit status checked · Stop-loss present
-where required · Stop-loss distance valid · Take-profit valid where required ·
-Order quantity valid · Minimum quantity checked · Maximum quantity checked ·
-Quantity increment/step checked · Price increment/tick size checked ·
-Contract specification current · Instrument tradable · Market open · No
-trading halt · No account restriction · No margin call state · No liquidation
-state · No active risk lock · No unresolved ledger exception · No unresolved
-broker exception · Account currency checked · Instrument currency checked ·
-FX conversion available where required · Commission/fee assumptions
-available · Estimated transaction cost checked · Estimated slippage checked ·
-Final post-trade account state within configured limits
+D1 defines the ground on which those implementation increments are subsequently built.
 
-**Note on "where required":** under HR-01, "Stop-loss present where required"
-and "Take-profit valid where required" apply to **every** OPEN. The catalogue
-keeps Matt's verbatim names and states this interpretation explicitly.
+---
 
-## Appendix C — OPEN decisions (record; do not decide)
+# 22. Security Baseline
 
-For each item, 11-DECISIONS lists the options and marks the design partner's
-proposal **as a proposal**.
+TRON follows least privilege.
 
-1. **Conflict policy** when long and short actions both clear the threshold.
-   Proposed: skip that instrument this cycle.
-2. **Existing-position policy.** Proposed for MVP: at most one position per
-   instrument; ignore new actions while one is open.
-3. **Safety exits on a hard-limit breach.** Proposed for MVP: none. A breach
-   blocks new trades; exits are left to broker-side SL/TP.
-4. **Who owns quantity:** FALCON's post, or TRON's `sizing.yaml`. Proposed:
-   fixed base-unit size in TRON config for MVP.
-5. **Pull mechanism:** 1-minute polling versus Redis Streams consumer groups
-   (latency and acknowledgement trade-off).
-6. **Routing:** whether posts name an account, or are broker-neutral with
-   TRON's routing deciding. Proposed: broker-neutral.
-7. **Graylog placement in prod.** Proposed: a separate host from the
-   execution VPS, fed from TRON's local spool.
-8. **FALCON confidence calibration:** the requirement that confidence be
-   comparable across strategies (FALCON's responsibility).
-9. **Ledger mirror refresh design.** Proposed: pre-trade live read,
-   post-trade deal read, and a 5-minute full sweep.
-10. **TRON runtime language and version.** Python is inferred from the
-    gateway bridge; not decided.
-11. **Independent PID review** by CGPT, per Forge's operating model: whether
-    it applies to TRON PIDs, or the claude.ai design partner fills the role.
+Requirements:
 
-## Appendix D — Facts available from mt5-gateway work
+- secrets never enter git;
+- secrets never enter logs;
+- secrets are not placed in ordinary application configuration;
+- examples use placeholders;
+- external inputs are treated as untrusted;
+- schemas validate canonical messages;
+- invalid messages fail closed;
+- write authority is minimised;
+- read-only access is used where sufficient;
+- execution authority is isolated from observers;
+- repository secret scanning remains active;
+- security hooks must not be bypassed.
 
-These were reported by HELM. Provenance is stated per Forge
-`docs/EVIDENCE-DOCTRINE.md`. **Where a fact exists only in a chat report and
-not in a repo evidence file, the docs cite it as "HELM report, date"; the PL
-does not treat it as repo evidence.**
+Because the repository is public during development, repository content must be treated as **publicly readable information**.
 
-**MEASURED, Vantage demo on mt5-gateway rc6 (HELM, 2026-09-26/27):**
+Before live trading, the security architecture requires a separate explicit production-readiness review.
 
-- With an ESTABLISHED broker TCP connection, the bridge calls `initialize()`,
-  `terminal_info()`, `version()`, `account_info().trade_mode` (= DEMO),
-  `symbol_info_tick()` and `positions_total()` all returned successfully.
-  Terminal build 6230.
-- BTCUSD ticks advanced over a 60-second weekend window.
-- Tick timestamps read about 3 hours ahead of UTC, consistent with broker
-  server time of UTC+3 in late September.
-- Broker symbol names include variants: `XAUUSD` and `XAUUSD.crp`, plus
-  several BTC crosses.
-- `symbol_info_tick("XAUUSD")` failed with "Not found" until
-  `symbol_select("XAUUSD", True)` was called, then succeeded.
+---
 
-**INFERRED, not established:**
+# 23. Mechanical Quality Gates
 
-- **The cause of the historical `-10005` IPC timeout.** It is **unexplained.**
-  The shared `servers.dat` seed coincided with the fix, but a May 2026 test
-  with a warmed `servers.dat` still failed. Documents must not state a cause.
-- **Whether the broker time offset follows EU or US daylight-saving dates.**
-  Undetermined; the offset must be measured, never hard-coded.
-- **OANDA MT5 specifics** (server naming, the OANDA One account type, and
-  the reported GMT+2/+3 server time) come from OANDA's public pages, not from
-  measurement.
+`tests/test_docs_baseline.py` must provide at least:
+
+## T1 — Schema validity
+
+Every JSON Schema is itself valid draft 2020-12.
+
+## T2 — Valid examples
+
+Every valid example validates against its intended schema.
+
+## T3 — Invalid examples
+
+Every invalid example fails for its intended reason.
+
+Minimum negative cases:
+
+- OPEN missing stop-loss;
+- OPEN missing take-profit;
+- numeric rather than decimal-string price;
+- unsupported action;
+- invalid confidence;
+- upstream broker-lot quantity;
+- malformed timestamp;
+- prohibited/unknown field where the contract forbids it.
+
+Tests assert the expected failing path/keyword so failure cannot pass accidentally.
+
+## T4 — Configuration validation
+
+Every example configuration validates.
+
+Every configuration schema has at least one deliberate negative example.
+
+## T5 — Check catalogue integrity
+
+Every check ID:
+
+```text
+documentation
+↔ schema
+↔ example configuration
+```
+
+must reconcile in both directions.
+
+Every Product Authority check listed in §13 must appear exactly once in the catalogue.
+
+## T6 — Capability integrity
+
+Every referenced capability ID exists in `10-CAPABILITIES.md`.
+
+## T7 — Documentation links
+
+All internal relative documentation links resolve.
+
+## T8 — TRON resource naming
+
+Every TRON-owned Docker resource name represented by the documentation baseline must comply with HR-12.
+
+This test is **not limited to one architecture table**.
+
+## T9 — Security scan
+
+Repository/branch secret scanning is clean.
+
+## T10 — Decision integrity
+
+Every OPEN decision is represented as OPEN.
+
+No documentation may present an OPEN proposal as a decided requirement.
+
+---
+
+# 24. Non-Vacuity
+
+Passing tests are insufficient unless the tests are capable of detecting the failures they claim to guard against.
+
+The evidence record must demonstrate at minimum:
+
+1. temporarily remove mandatory OPEN protection and prove the relevant test fails;
+2. temporarily remove one required Product Authority check and prove catalogue-integrity testing fails;
+3. temporarily introduce a non-compliant TRON Docker resource name and prove naming validation fails;
+4. temporarily represent an OPEN decision as DECIDED and prove decision-integrity testing fails;
+5. revert every deliberate mutation;
+6. rerun the clean suite successfully.
+
+The evidence record captures commands, expected failure and observed result.
+
+---
+
+# 25. Forge Delivery Model
+
+The PID is authoritative for this increment.
+
+Rogue acts as PL sponsor.
+
+The Forge PL owns integration.
+
+Engineers perform bounded work but do not independently reinterpret unresolved product decisions.
+
+The PL alone owns:
+
+- integration branch;
+- commits;
+- reconciliation between work items;
+- PR creation/management.
+
+A fresh independent Auditor performs final acceptance review.
+
+No Engineer may resolve ambiguity by inventing Product Authority.
+
+When an unresolved issue materially affects architecture or contract semantics:
+
+```text
+STOP
+→ report the exact question
+→ obtain Product Authority / Architecture ruling
+→ continue
+```
+
+---
+
+# 26. Approved Work Decomposition
+
+## Wave 1 — Foundations
+
+### WI-A — Context & Requirements
+
+Owns:
+
+```text
+01-CONTEXT.md
+02-REQUIREMENTS.md
+```
+
+### WI-B — Contracts & Canonical Schemas
+
+Owns:
+
+```text
+05-CONTRACTS.md
+canonical contract schemas
+valid examples
+invalid examples
+```
+
+Wave 1 establishes shared vocabulary.
+
+---
+
+## Wave 2 — Domain Design
+
+After Wave 1 integration:
+
+### WI-C — Checks
+
+Owns:
+
+```text
+06-CHECKS-CATALOGUE.md
+checks.schema.json
+checks.yaml example
+```
+
+One owner controls the check-ID namespace.
+
+### WI-D — Configuration & Broker Profiles
+
+Owns:
+
+```text
+07-CONFIGURATION.md
+08-BROKER-PROFILES.md
+remaining configuration schemas
+configuration examples
+```
+
+### WI-E — Architecture & Capabilities
+
+Owns:
+
+```text
+03-ARCHITECTURE.md
+10-CAPABILITIES.md
+```
+
+One owner controls the capability namespace.
+
+### WI-F — Trade Lifecycle
+
+Owns:
+
+```text
+04-TRADE-LIFECYCLE.md
+```
+
+### WI-G — Events & Security
+
+Owns:
+
+```text
+09-EVENTS-AND-GRAYLOG.md
+12-SECURITY.md
+```
+
+---
+
+## Wave 3 — Reconciliation
+
+### WI-H — Decisions & Documentation Index
+
+Owns:
+
+```text
+11-DECISIONS.md
+README.md
+```
+
+This work item reconciles the entire set and ensures OPEN decisions remain OPEN.
+
+---
+
+## Wave 4 — Mechanical Assurance
+
+### WI-I — Tests & Evidence
+
+Owns:
+
+```text
+test_docs_baseline.py
+requirements-dev.txt
+D1 mechanical evidence
+non-vacuity demonstrations
+```
+
+---
+
+# 27. Acceptance Definition
+
+`WO-TRON-D1` is GREEN only when:
+
+1. every D1 deliverable exists;
+2. all canonical schemas are valid;
+3. valid examples pass;
+4. negative examples fail for their intended reasons;
+5. configuration examples validate;
+6. the complete Product Authority check catalogue is mapped;
+7. capability IDs reconcile;
+8. OPEN decisions remain OPEN everywhere;
+9. HR-01 through HR-16 are consistently represented;
+10. TRON Docker naming complies with HR-12;
+11. repository security scanning is clean;
+12. internal documentation links resolve;
+13. required non-vacuity demonstrations are recorded;
+14. the complete mechanical suite is GREEN on the PL-integrated commit;
+15. an independent Auditor reviews the complete integrated result and returns GREEN;
+16. the Auditor confirms no Engineer has silently introduced a product decision;
+17. the Auditor confirms no secrets, account identifiers or sensitive infrastructure identifiers are present;
+18. the Auditor prompt and verdict are preserved in the evidence record;
+19. **Matt gives explicit final acceptance.**
+
+Auditor GREEN does not authorise merge without Matt's acceptance.
+
+---
+
+# 28. D1 Evidence Standard
+
+Evidence must distinguish:
+
+```text
+DEFINED
+OBSERVED
+INFERRED
+OPEN
+```
+
+**DEFINED**  
+A requirement, contract or architecture decision established by this PID.
+
+**OBSERVED**  
+Something directly demonstrated by evidence produced during the relevant TRON work.
+
+**INFERRED**  
+A technically reasonable assumption that has not yet crossed its load-bearing real-world gate.
+
+**OPEN**  
+A product or architectural decision intentionally unresolved.
+
+Documentation must never upgrade:
+
+```text
+INFERRED → OBSERVED
+OPEN → DEFINED
+```
+
+without the required evidence or authority.
+
+For future execution increments, broker behaviour is proven only by exercising the relevant behaviour against an authorised paper environment.
+
+Mocks prove TRON logic.
+
+Mocks do not prove broker behaviour.
+
+---
+
+# 29. Subsequent Delivery Direction
+
+After D1 closes GREEN, implementation proceeds through separate bounded PIDs.
+
+Expected sequence:
+
+```text
+D1  authoritative design baseline
+ ↓
+CAP-00 foundation
+ ↓
+CAP-01 board ingestion
+ ↓
+CAP-02 deterministic selection
+ ↓
+CAP-03 negotiation
+ ↓
+CAP-04 checks / dry-run
+ ↓
+CAP-05 minimum-size protected paper OPEN
+ ↓
+CAP-06 protection verification
+ ↓
+reconciliation / recovery capabilities
+ ↓
+XAUUSD proving
+ ↓
+expanded capability backlog
+ ↓
+production-readiness programme
+```
+
+Each increment gets its own evidence and independent audit.
+
+Passing D1 proves the design baseline.
+
+It does **not** prove that TRON can trade.
+
+Passing dry-run proves decision behaviour.
+
+It does **not** prove execution.
+
+Only controlled broker execution can prove the execution path.
+
+---
+
+# 30. Product Decisions Carried Into D1
+
+The following are settled unless Matt explicitly changes them:
+
+1. TRON is deterministic.
+2. TRON contains no AI trading judgement.
+3. FALCON supplies candidate actions one-way.
+4. NEO observes and never instructs execution.
+5. Every OPEN has broker-side SL and TP.
+6. Broker state is authoritative trading truth.
+7. Redis is messaging, not durable state.
+8. TRON maintains a durable local operational journal.
+9. Trading Graylog receives structured execution events.
+10. One TRON execution instance serves one configured broker/account context.
+11. Canonical time is UTC epoch milliseconds.
+12. Exact decimal representations are used for prices, quantities and money.
+13. Broker lot semantics do not propagate upstream.
+14. Configuration is external, schema-validated and attributable.
+15. Market/instrument tradability is checked before OPEN.
+16. Contracts use market-standard/FIX-aligned semantics where appropriate.
+17. TRON is built capability by capability.
+18. BTCUSD is the first controlled execution instrument.
+19. XAUUSD follows once the execution path is proven.
+20. TRON-owned deployable infrastructure is containerised and identifiable by the `-tron` convention.
+21. Every meaningful execution decision must be auditable.
+22. Safety-relevant uncertainty fails closed for new risk.
+23. The repository remains public during the current architecture/build phase so Central Architecture can directly inspect it, subject to the security controls in this PID.
+24. Final D1 merge requires independent Auditor GREEN and Matt's explicit acceptance.
+
+---
+
+# 31. Start Instruction
+
+The Forge PL must:
+
+1. read this PID as a complete set;
+2. verify the TRON repository and working state;
+3. verify repository security hooks are active;
+4. verify the repository's public visibility does not grant unauthorised write/merge authority;
+5. compare the approved decomposition in §26 with current work state;
+6. discard assumptions or work derived solely from the superseded PID where they conflict with this PID;
+7. report any existing work that now conflicts with this PID before integrating it;
+8. execute the approved waves in dependency order;
+9. stop for Product Authority where this PID explicitly leaves a decision OPEN;
+10. produce the complete D1 evidence package;
+11. dispatch one fresh independent Auditor after integration and mechanical GREEN;
+12. STOP after Auditor GREEN for Matt's final acceptance.
+
+No unrelated work.
+
+No runtime implementation under `WO-TRON-D1`.
+
+No modification of external execution infrastructure.
+
+---
+
+**END — WO-TRON-D1**
