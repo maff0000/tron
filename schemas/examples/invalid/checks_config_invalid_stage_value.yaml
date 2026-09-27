@@ -1,0 +1,13 @@
+# Deliberately INVALID example for schemas/config/checks.schema.json.
+# Intended failure: stage value outside the closed [0,1,2,3,4,5,6] enum (PID section 12).
+# Expected failing keyword: enum at /checks/CHK-058/stage.
+config_version: "1"
+checks:
+  CHK-058:
+    check_id: "CHK-058"
+    name: "Instrument tradable"
+    stage: 7
+    status: MVP
+    origin: PA-13
+    enabled: true
+    parameters: {}
